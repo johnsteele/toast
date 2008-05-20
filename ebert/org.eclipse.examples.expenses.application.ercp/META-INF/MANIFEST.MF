@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Expense Reporting Application eRCP Plug-in
+Bundle-SymbolicName: org.eclipse.examples.expenses.application.ercp;singleton:=true
+Bundle-Version: 0.1.0.qualifier
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.ui,
+ org.eclipse.examples.expenses.core,
+ org.eclipse.examples.expenses.views,
+ org.eclipse.ercp.ui.workbench
+Eclipse-LazyStart: false
+Bundle-RequiredExecutionEnvironment: CDC-1.1/Foundation-1.1,
+ OSGi/Minimum-1.1

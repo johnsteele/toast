@@ -1,0 +1,23 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Expense Reporting Application (General) Plug-in
+Bundle-SymbolicName: org.eclipse.examples.expenses.application.general;singleton:=true
+Bundle-Version: 0.1.0.qualifier
+Bundle-RequiredExecutionEnvironment: J2SE-1.5
+Export-Package: org.eclipse.examples.expenses.application.general
+Import-Package: org.eclipse.core.commands.common,
+ org.eclipse.core.runtime,
+ org.eclipse.jface.action,
+ org.eclipse.swt,
+ org.eclipse.swt.events,
+ org.eclipse.swt.graphics,
+ org.eclipse.swt.layout,
+ org.eclipse.swt.widgets,
+ org.eclipse.ui,
+ org.eclipse.ui.actions,
+ org.eclipse.ui.application,
+ org.osgi.framework;version="1.4.0",
+ org.osgi.util.tracker;version="1.3.3"
+Require-Bundle: org.eclipse.examples.expenses.core;bundle-version="[0.1.0,1.0.0)",
+ org.eclipse.examples.expenses.views;bundle-version="[0.1.0,1.0.0)"
+Bundle-Activator: org.eclipse.examples.expenses.application.general.Activator

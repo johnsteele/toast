@@ -1,0 +1,13 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Expense Reporting Core Plug-in
+Bundle-SymbolicName: org.eclipse.examples.expenses.core
+Bundle-Version: 0.1.0.qualifier
+Export-Package: org.eclipse.examples.expenses.core
+Import-Package: org.eclipse.core.runtime,
+ org.eclipse.jface.util,
+ org.osgi.framework;version="[1.3.0,2.0.0)"
+Bundle-Activator: org.eclipse.examples.expenses.core.ExpensesCoreActivator
+Eclipse-LazyStart: true
+Bundle-RequiredExecutionEnvironment: CDC-1.1/Foundation-1.1,
+ OSGi/Minimum-1.1

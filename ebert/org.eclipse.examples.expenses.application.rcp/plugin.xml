@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <extension
+         id="application"
+         point="org.eclipse.core.runtime.applications">
+      <application>
+         <run
+               class="org.eclipse.examples.expenses.application.ExpenseReporting">
+         </run>
+      </application>
+   </extension>
+   <extension
+         id="product"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="org.eclipse.examples.expenses.application.rcp.application"
+            name="Expense Reporting Application">
+         <property
+               name="windowImages"
+               value="icons/alt_window_16.gif,icons/alt_window_32.gif">
+         </property>
+         <property
+               name="appName"
+               value="Expense Reporting Application">
+         </property>
+      </product>
+   </extension>
+
+ <extension
+       point="org.eclipse.examples.expenses.views.viewCustomizers">
+    <customizer
+          class="org.eclipse.examples.expenses.application.ViewCustomizer">
+    </customizer>
+ </extension>
+</plugin>

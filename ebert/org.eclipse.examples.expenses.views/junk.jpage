@@ -1,0 +1,22 @@
+java.util.Currency.getInstance(java.util.Locale.getAvailableLocales())
+
+java.util.Locale[] locales = java.util.Locale.getAvailableLocales();
+for(int index=0;index<locales.length;index++) {
+	String code = "<unknown>";
+	try {
+		java.util.Currency currency = java.util.Currency.getInstance(locales[index]);
+		code = currency.getCurrencyCode() + currency.getSymbol(locales[index]);
+	} catch (Exception e) {
+	}
+	System.out.println(locales[index].getDisplayName() + " > " + code);
+}
+
+java.util.Currency.getInstance(new java.util.Locale("it", "ca"))
+
+Process process = Runtime.getRuntime().exec("java");
+java.io.InputStream in = process.getInputStream();
+byte[] buffer = new byte[1024];
+int count;
+while ((count = in.read(buffer)) > 0) {
+	System.out.println(new String(buffer, 0, count));
+}

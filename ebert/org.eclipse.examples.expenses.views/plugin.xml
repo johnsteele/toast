@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension-point id="viewCustomizers" name="View Customizers" schema="schema/viewCustomizers.exsd"/>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            class="org.eclipse.examples.expenses.views.LineItemView"
+            id="org.eclipse.examples.expenses.views.LineItemView"
+            name="LineItemView">
+      </view>
+      <view
+            class="org.eclipse.examples.expenses.views.ExpenseReportView"
+            id="org.eclipse.examples.expenses.views.ExpenseReportView"
+            name="LineItemsTableView">
+      </view>
+      <view
+            class="org.eclipse.examples.expenses.views.BinderView"
+            icon="icons/demo.png"
+            id="org.eclipse.examples.expenses.views.BinderView"
+            name="BinderView">
+      </view>
+   </extension>
+</plugin>

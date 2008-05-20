@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <extension
+         point="org.eclipse.rap.ui.entrypoint">
+      <entrypoint
+            class="org.eclipse.examples.expenses.application.rap.ExpenseReporting"
+            parameter="view"
+            id="org.eclipse.examples.expenses.application.rap.ExpenseReporting">
+      </entrypoint>
+   </extension>
+   <extension
+         point="org.eclipse.rap.ui.branding">
+      <branding
+            body="stuff.html"
+            defaultEntrypointId="org.eclipse.examples.expenses.application.rap.ExpenseReporting"
+            exitConfirmation="Do you really want to leave the Eclipse Expense Reporting Application?"
+            id="org.eclipse.examples.expenses.application.rap.branding"
+            servletName="rap"
+            title="The Eclipse Expense Reporting Application">
+      </branding>
+   </extension>
+</plugin>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+   <extension
+         point="org.eclipse.ercp.eworkbench.applications">
+      <application
+            id="org.eclipse.examples.expenses.application.ercp.application1"
+            name="Expense Reporting">
+         <views
+               normal="org.eclipse.examples.expenses.views.BinderView">
+         </views>
+      </application>
+   </extension>
+   <extension
+         point="org.eclipse.examples.expenses.views.viewCustomizers">
+      <customizer
+            class="org.eclipse.examples.expenses.application.ercp.ViewCustomizer">
+      </customizer>
+   </extension>
+</plugin>
