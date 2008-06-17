@@ -63,7 +63,6 @@ public class Activator extends AbstractUIPlugin {
 	 */
 	void createDateFieldFactoryService(BundleContext context) {
 		IDateFieldFactory factory = new IDateFieldFactory() {
-			@Override
 			public DateField createDateField(Composite parent) {
 				return new NebulaDateField(parent);
 			}			
