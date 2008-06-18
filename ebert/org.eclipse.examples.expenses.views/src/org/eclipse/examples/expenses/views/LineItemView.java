@@ -353,7 +353,7 @@ public class LineItemView extends AbstractView {
 	 * <p>This view doesn't use a viewer that
 	 * contributes any notion of selection.</p>
 	 */
-	protected Viewer getViewer() {
+	public Viewer getViewer() {
 		return null;
 	}
 
