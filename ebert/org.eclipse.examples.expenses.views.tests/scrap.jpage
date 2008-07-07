@@ -1,0 +1,1 @@
+java.util.Currency.getInstance(java.util.Locale.CANADA) == java.util.Currency.getInstance(java.util.Locale.CANADA)

@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Expenses View Tests Fragment
+Bundle-SymbolicName: org.eclipse.examples.expenses.views.tests
+Bundle-Version: 1.0.0
+Fragment-Host: org.eclipse.examples.expenses.views;bundle-version="[0.1.0,1.0.0)"
+Bundle-RequiredExecutionEnvironment: CDC-1.1/Foundation-1.1
+Require-Bundle: org.junit;bundle-version="3.8.2"

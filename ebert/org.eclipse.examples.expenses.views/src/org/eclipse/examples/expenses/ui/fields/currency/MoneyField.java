@@ -51,6 +51,7 @@ public class MoneyField extends Composite {
 
 	Currency[] currencies;
 	boolean ignoreWidgetEvents;
+	Currency[] frequentlyUsedCurrencies;
 	
 	public MoneyField(Composite parent, int style) {
 		super (parent, style);
@@ -141,25 +142,44 @@ public class MoneyField extends Composite {
 		currencyViewer.setInput(getCurrencies());
 	}
 
-	protected int compareFrequentCurrencies(Currency first, Currency second) {
-		int index1 = getFrequentlyUsedCurrencies().indexOf(first);
-		int index2 = getFrequentlyUsedCurrencies().indexOf(second);
-		
-		if (index1 < index2) return -1;
-		if (index1 > index2) return 1;
+	/**
+	 * This method compares the two frequently used {@link Currency} instances
+	 * and returns -1 if they are &quot;in order&quot;, 1 if they are &quot;in
+	 * reverse order&quot; or 0 if they are the same. Note that this method
+	 * assumes that both currencies are actually in the
+	 * {@link #frequentlyUsedCurrencies} array (and that the field has actually
+	 * been set).
+	 * 
+	 * @param first
+	 *            an instance of {@link Currency}.
+	 * @param second
+	 *            an instance of {@link Currency}.
+	 * @return -1, 0, or 1 as described above.
+	 */
+	int compareFrequentCurrencies(Currency first, Currency second) {
+		if (first == second) return 0;
+		for(int index=0;index<frequentlyUsedCurrencies.length;index++) {
+			if (first == frequentlyUsedCurrencies[index]) return -1;
+			if (second == frequentlyUsedCurrencies[index]) return 1;
+		}
 		return 0;
 	}
 
-	protected boolean isFrequentlyUsedCurrency(Currency currency) {
-		return getFrequentlyUsedCurrencies().contains(currency);
-	}
-
-	private List getFrequentlyUsedCurrencies() {
-		List common = new ArrayList();
-		common.add(Currency.getInstance(Locale.CANADA));
-		common.add(Currency.getInstance(Locale.US));
-		common.add(Currency.getInstance(Locale.GERMANY));
-		return common;
+	/**
+	 * This method answers whether or not the given {@link Currency} is a
+	 * frequently used currency.
+	 * 
+	 * @param currency
+	 *            an instance of Currency.
+	 * @return <code>true</code> if the parameter occurs in the
+	 *         {@link #frequentlyUsedCurrencies} field; false otherwise.
+	 */
+	boolean isFrequentlyUsedCurrency(Currency currency) {
+		if (frequentlyUsedCurrencies == null) return false;
+		for(int index=0;index<frequentlyUsedCurrencies.length;index++) {
+			if (currency == frequentlyUsedCurrencies[index]) return true;
+		}
+		return false;
 	}
 
 	/**
@@ -193,9 +213,17 @@ public class MoneyField extends Composite {
 		String language = Locale.getDefault().getLanguage();
 		for(int index=0;index<countryCodes.length;index++) {
 			Locale locale = new Locale(language, countryCodes[index]);
-			Currency currency = Currency.getInstance(locale);
-			if (currency == null) continue;
-			currencyToCountryMap.put(currency, locale);
+			try {
+				Currency currency = Currency.getInstance(locale);
+				if (currency == null) continue;
+				currencyToCountryMap.put(currency, locale);
+			} catch (IllegalArgumentException e) {
+				/*
+				 * Am seeing invalid country entry errors when using
+				 * J2SE 1.4 (they don't seem to occur on other JVM versions).
+				 * When one occurs, catch it, ignore it, and move on.
+				 */
+			}
 		}
 		Set currencies = currencyToCountryMap.keySet();
 		this.currencies = (Currency[]) currencies.toArray(new Currency[currencies.size()]);
@@ -237,14 +265,17 @@ public class MoneyField extends Composite {
 	
 	void updateWidgets() {
 		ignoreWidgetEvents = true;
-		if (money == null) {
-			amountText.setText("");
-			currencyViewer.setSelection(StructuredSelection.EMPTY);
-		} else {
-			amountText.setText(getAmountFormat().format(amount));
-			currencyViewer.setSelection(new StructuredSelection(currency), true);
+		try {
+			if (money == null) {
+				amountText.setText("");
+				currencyViewer.setSelection(StructuredSelection.EMPTY);
+			} else {
+				amountText.setText(getAmountFormat().format(amount));
+				currencyViewer.setSelection(new StructuredSelection(currency), true);
+			}
+		} finally {
+			ignoreWidgetEvents = false;
 		}
-		ignoreWidgetEvents = false;
 	}
 		
 	void setCurrency(Currency currency) {
@@ -328,5 +359,14 @@ public class MoneyField extends Composite {
 		checkWidget();
 		if (valueListeners == null) return;
 		valueListeners.remove(moneyChangeListener);
+	}
+
+	public Currency[] getFrequentlyUsedCurrencies() {
+		return frequentlyUsedCurrencies;
+	}
+	
+	public void setFequentlyUsedCurrencies(Currency[] frequentlyUsedCurrencies) {
+		this.frequentlyUsedCurrencies = frequentlyUsedCurrencies;
+		currencyViewer.refresh();
 	}				
 }
