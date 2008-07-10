@@ -19,13 +19,38 @@ import java.io.ObjectOutputStream;
 
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.Filter;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.event.EventAdmin;
+import org.osgi.util.tracker.ServiceTracker;
 
 public class ExpensesCoreActivator extends Plugin {
 	static ExpensesCoreActivator instance;
+	EventAdmin eventAdmin;
+	private ServiceTracker tracker;
 
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		instance = this;
+		
+		tracker = new ServiceTracker(context,EventAdmin.class.getName(), null) {
+			public Object addingService(ServiceReference reference) {
+				Object service = super.addingService(reference);
+				eventAdmin = (EventAdmin)service;
+				return service;
+			}
+			public void removedService(ServiceReference reference, Object service) {
+				eventAdmin = null;
+				super.removedService(reference, service);
+			}
+		};
+		tracker.open();
+	}
+	
+	public void stop(BundleContext context) throws Exception {
+		tracker.close();
+		instance = null;
+		super.stop(context);
 	}
 	
 	File getBinderFile(String fileName) {
@@ -88,5 +113,9 @@ public class ExpensesCoreActivator extends Plugin {
 
 	public static ExpensesCoreActivator getDefault() {
 		return instance;
+	}
+
+	public EventAdmin getEventAdmin() {
+		return eventAdmin;
 	}
 }

@@ -13,6 +13,10 @@ package org.eclipse.examples.expenses.core;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Properties;
+
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
 
 public class ExpenseReport extends ObjectWithProperties implements Serializable {
 	
@@ -24,11 +28,6 @@ public class ExpenseReport extends ObjectWithProperties implements Serializable 
 
 	public ExpenseReport(String title) {
 		this.title = title;
-	}
-
-	public void addLineItem(LineItem lineItem) {
-		lineItems.add(lineItem);
-		firePropertyChanged(LINEITEMS_PROPERTY, null, getLineItems());
 	}
 
 	public LineItem[] getLineItems() {
@@ -45,8 +44,17 @@ public class ExpenseReport extends ObjectWithProperties implements Serializable 
 		return title;
 	}
 
+	public void addLineItem(LineItem lineItem) {
+		lineItems.add(lineItem);
+
+		Properties properties = new Properties();
+		properties.put(OBJECT_ADDED, lineItem);
+		
+		fireCollectionEvent(LINEITEMS_PROPERTY, lineItems, OBJECT_ADDED, lineItem);
+	}
+	
 	public void removeLineItem(LineItem lineItem) {
 		lineItems.remove(lineItem);
-		firePropertyChanged(LINEITEMS_PROPERTY, null, getLineItems());
-	}
+		fireCollectionEvent(LINEITEMS_PROPERTY, lineItems, OBJECT_REMOVED, lineItem);
+	}	
 }
