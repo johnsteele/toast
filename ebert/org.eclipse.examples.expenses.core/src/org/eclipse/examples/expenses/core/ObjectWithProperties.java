@@ -128,7 +128,7 @@ public abstract class ObjectWithProperties implements Serializable {
 		if (oldValue != null) properties.put(OLD_VALUE, oldValue);
 		if (newValue != null) properties.put(NEW_VALUE, newValue);
 		
-		eventAdmin.sendEvent(new Event(PROPERTY_CHANGE_TOPIC, properties));
+		eventAdmin.postEvent(new Event(PROPERTY_CHANGE_TOPIC, properties));
 	}
 	
 	/**
