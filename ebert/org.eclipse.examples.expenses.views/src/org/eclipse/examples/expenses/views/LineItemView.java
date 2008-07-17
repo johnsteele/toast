@@ -12,15 +12,10 @@ package org.eclipse.examples.expenses.views;
 
 import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
 
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
-import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
 import org.eclipse.examples.expenses.ui.fields.currency.IMoneyChangeListener;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyChangeEvent;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyField;
@@ -38,8 +33,6 @@ import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.jface.viewers.ViewerFilter;
-import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -53,8 +46,6 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISelectionService;
 import org.eclipse.ui.IWorkbenchPart;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
 
 public class LineItemView extends AbstractView {
 
