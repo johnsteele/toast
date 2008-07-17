@@ -55,15 +55,17 @@ public class LineItemView extends AbstractView {
 	 */
 	public static final String ID = LineItemView.class.getName();
 	
-	private LineItem lineItem;
+	LineItem lineItem;
 	
-	private DateField dateField;
+	DateField dateField;
 
-	private ComboViewer typeDropdown;
+	ComboViewer typeDropdown;
 
-	private MoneyField amountField;
+	MoneyField amountField;
 
-	private Text commentText;	
+	Text commentText;	
+
+	Text exchangeRateText;
 
 	/**
 	 * This colour is used to indicate an error on a field.
@@ -81,8 +83,6 @@ public class LineItemView extends AbstractView {
 			update();
 		}			
 	};
-
-	private Text exchangeRateText;
 	
 	public void createPartControl(Composite parent) {
 		parent.setLayout(new GridLayout(2, false));

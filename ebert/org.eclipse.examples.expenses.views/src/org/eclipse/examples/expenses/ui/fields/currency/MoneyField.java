@@ -286,7 +286,7 @@ public class MoneyField extends Composite {
 	
 	NumberFormat getAmountFormat() {
 		NumberFormat format = NumberFormat.getInstance(getUserLocale());
-		int fractionDigits = currency.getDefaultFractionDigits();
+		int fractionDigits = currency == null ? 2 : currency.getDefaultFractionDigits();
 		format.setMaximumFractionDigits(fractionDigits);
 		format.setMinimumFractionDigits(fractionDigits);
 		return format;
