@@ -3,13 +3,11 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Expense Reporting Views Plug-in
 Bundle-SymbolicName: org.eclipse.examples.expenses.views;singleton:=true
 Bundle-Version: 0.1.0.qualifier
-Require-Bundle: org.eclipse.examples.expenses.core;bundle-version="[0.1.0,1.0.0)"
 Export-Package: org.eclipse.examples.expenses.ui;
   uses:="org.eclipse.core.runtime,
    org.eclipse.ui,
    org.eclipse.jface.viewers,
    org.osgi.framework",
- org.eclipse.examples.expenses.ui.fields.date,
  org.eclipse.examples.expenses.views;
   uses:="org.eclipse.ui,
    org.eclipse.examples.expenses.core,
@@ -18,7 +16,9 @@ Export-Package: org.eclipse.examples.expenses.ui;
    org.eclipse.swt.widgets"
 Import-Package: org.eclipse.core.commands.common,
  org.eclipse.core.runtime,
- org.eclipse.examples.expenses.ui.fields.date,
+ org.eclipse.examples.expenses.core,
+ org.eclipse.examples.expenses.widgets.datefield,
+ org.eclipse.examples.expenses.widgets.datefield.common,
  org.eclipse.jface.action,
  org.eclipse.jface.util,
  org.eclipse.jface.viewers,

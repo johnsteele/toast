@@ -8,12 +8,13 @@
  * Contributors:
  *    The Eclipse Foundation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.examples.expenses.ui.fields.date;
+package org.eclipse.examples.expenses.widgets.datefield;
 
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
 
+import org.eclipse.examples.expenses.widgets.datefield.common.AbstractDateField;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -29,12 +30,12 @@ import org.eclipse.swt.widgets.Text;
  * @see IDateFieldFactory
  * @see ListItemView#createDateField
  */
-public class SimpleDateField extends DateField {
+public class DateField extends AbstractDateField {
 
 	Text dateText;
 	static DateFormat format = DateFormat.getDateInstance(DateFormat.MEDIUM);
 	
-	public SimpleDateField(final Composite parent) {
+	public DateField(final Composite parent) {
 		super(parent);
 		dateText = new Text(parent, SWT.BORDER);
 		dateText.addModifyListener(new ModifyListener() {

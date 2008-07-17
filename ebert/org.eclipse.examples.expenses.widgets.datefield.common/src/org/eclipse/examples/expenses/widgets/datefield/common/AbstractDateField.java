@@ -8,7 +8,7 @@
  * Contributors:
  *    The Eclipse Foundation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.examples.expenses.ui.fields.date;
+package org.eclipse.examples.expenses.widgets.datefield.common;
 
 import java.util.Date;
 
@@ -24,11 +24,11 @@ import org.eclipse.swt.widgets.Control;
  *
  * TODO This class should probably subclass {@link Composite}.
  */
-public abstract class DateField {
+public abstract class AbstractDateField {
 	Date date;
 	ListenerList dateListeners;
 
-	public DateField(Composite parent) {
+	public AbstractDateField(Composite parent) {
 	}
 
 	public void setLayoutData(Object layoutData) {

@@ -24,11 +24,9 @@ import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
 import org.eclipse.examples.expenses.ui.fields.currency.IMoneyChangeListener;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyChangeEvent;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyField;
-import org.eclipse.examples.expenses.ui.fields.date.DateChangeEvent;
-import org.eclipse.examples.expenses.ui.fields.date.DateField;
-import org.eclipse.examples.expenses.ui.fields.date.IDateChangeListener;
-import org.eclipse.examples.expenses.ui.fields.date.IDateFieldFactory;
-import org.eclipse.examples.expenses.ui.fields.date.SimpleDateField;
+import org.eclipse.examples.expenses.widgets.datefield.DateField;
+import org.eclipse.examples.expenses.widgets.datefield.common.DateChangeEvent;
+import org.eclipse.examples.expenses.widgets.datefield.common.IDateChangeListener;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ComboViewer;
@@ -164,10 +162,7 @@ public class LineItemView extends AbstractView {
 	 * behaviour.
 	 */
 	protected void createDateField(Composite parent) {
-		dateField = createDateFieldUsingFactory(parent);
-		if (dateField == null) {
-			dateField = new SimpleDateField(parent);
-		} 
+		dateField = new DateField(parent);
 
 		dateField.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		dateField.addDateListener(new IDateChangeListener() {
@@ -176,34 +171,6 @@ public class LineItemView extends AbstractView {
 				lineItem.setDate(event.getNewValue());
 			}					
 		});
-	}
-
-	/**
-	 * This method attempts to find an {@link IDateFieldFactory}. If
-	 * one exists, it is used to create a {@link DateField}.
-	 */
-	DateField createDateFieldUsingFactory(Composite parent) {
-		/*
-		 * First, we must obtain a service reference. If a service reference
-		 * is found, we get the service that it references.
-		 */
-		BundleContext context = ExpenseReportingUI.getDefault().getContext();
-		ServiceReference reference = context.getServiceReference(IDateFieldFactory.class.getName());
-		if (reference == null) return null;
-		IDateFieldFactory factory = (IDateFieldFactory) context.getService(reference);
-		
-		/*
-		 * Use the service to create a DateField.
-		 */
-		DateField field = factory.createDateField(parent);
-		
-		/*
-		 * Unget the service. It's important to balance 'get' service calls
-		 * with a corresponding 'unget'.
-		 */
-		context.ungetService(reference);
-		
-		return field;
 	}
 
 	private void createTypeLabel(Composite parent) {
@@ -353,7 +320,7 @@ public class LineItemView extends AbstractView {
 	 * <p>This view doesn't use a viewer that
 	 * contributes any notion of selection.</p>
 	 */
-	public Viewer getViewer() {
+	protected Viewer getViewer() {
 		return null;
 	}
 

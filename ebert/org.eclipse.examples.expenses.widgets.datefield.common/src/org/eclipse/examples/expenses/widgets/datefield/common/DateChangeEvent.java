@@ -8,12 +8,22 @@
  * Contributors:
  *    The Eclipse Foundation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.examples.expenses.ui.fields.date;
+package org.eclipse.examples.expenses.widgets.datefield.common;
 
-import org.eclipse.swt.widgets.Composite;
+import java.util.Date;
+import java.util.EventObject;
 
-public interface IDateFieldFactory {
+public class DateChangeEvent extends EventObject {
+	private static final long serialVersionUID = 3360451196508645054L;
+	
+	private final Date newValue;
 
-	DateField createDateField(Composite parent);
+	public DateChangeEvent(Object source, Date newValue) {
+		super(source);
+		this.newValue = newValue;
+	}
 
+	public Date getNewValue() {
+		return newValue;
+	}
 }

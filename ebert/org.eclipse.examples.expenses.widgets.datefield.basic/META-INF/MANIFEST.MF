@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Basic DateField Plug-in
+Bundle-SymbolicName: org.eclipse.examples.expenses.widgets.datefield.basic
+Bundle-Version: 0.0.1.qualifier
+Bundle-RequiredExecutionEnvironment: CDC-1.1/Foundation-1.1,
+ OSGi/Minimum-1.1
+Export-Package: org.eclipse.examples.expenses.widgets.datefield
+Import-Package: org.eclipse.examples.expenses.widgets.datefield.common,
+ org.eclipse.swt,
+ org.eclipse.swt.events,
+ org.eclipse.swt.widgets

@@ -8,24 +8,23 @@
  * Contributors:
  *    The Eclipse Foundation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.examples.expenses.ui.fields.date.nebula;
+package org.eclipse.examples.expenses.widgets.datefield;
 
 import java.util.Date;
 
-import org.eclipse.examples.expenses.ui.fields.date.DateField;
+import org.eclipse.examples.expenses.widgets.datefield.common.AbstractDateField;
 import org.eclipse.nebula.widgets.cdatetime.CDT;
 import org.eclipse.nebula.widgets.cdatetime.CDateTime;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
-public class NebulaDateField extends DateField {
+public class DateField extends AbstractDateField {
 	private CDateTime dateTime;
 	
-	public NebulaDateField(Composite parent) {
+	public DateField(Composite parent) {
 		super(parent);
 		dateTime = new CDateTime(parent, SWT.BORDER | CDT.DROP_DOWN);
 		dateTime.setFormat(CDT.DATE_MEDIUM);
