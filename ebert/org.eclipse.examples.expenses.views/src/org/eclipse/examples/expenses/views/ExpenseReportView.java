@@ -343,6 +343,7 @@ public class ExpenseReportView extends AbstractView {
 		hookSelectionListener();
 		
 		BundleContext context = ExpenseReportingUI.getDefault().getContext();
+		startExpenseReportChangedHandlerService(context);
 		startLineItemAddedHandlerService(context);
 		startLineItemRemovedHandlerService(context);
 		startLineItemChangedHandlerService(context);
