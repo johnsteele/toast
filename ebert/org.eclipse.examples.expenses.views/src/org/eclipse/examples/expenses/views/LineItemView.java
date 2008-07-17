@@ -154,12 +154,23 @@ public class LineItemView extends AbstractView {
 	
 	/**
 	 * This method creates a field for capturing the date from the user. The
-	 * technology for capturing dates varies by target. First, we attempt to
-	 * create a {@link DateField} using a factory. Factories can optionally
-	 * be created as Equinox services. If a factory exists, we use it to create
-	 * the date field. If no factory exists, we create a SimpleDateField
-	 * instead. This allows platforms to optionally override the default
-	 * behaviour.
+	 * technology for capturing dates varies by target, so we lean heavily on
+	 * the Equinox dependency matching.
+	 * <p>
+	 * More specifically, in the manifest for this bundle, we import the package
+	 * that contains the definition of the DateField. The actual bundle that
+	 * contributes this package is determined at runtime. At the time of this
+	 * writing, we have two possible implementations. The
+	 * org.eclipse.examples.expenses.widgets.datefield.basic bundle provides a
+	 * very simple SWT-widgets-based implementation. This implementation is
+	 * appropriate for the RAP and eRCP platforms which currently do not include
+	 * rich date-capturing fields. The
+	 * org.eclipse.examples.expenses.widgets.datefield.nebula bundle uses
+	 * Nebula's CDateTime widget which is fully supported on RCP. Both of these
+	 * bundles contribute the same class in the same package; at runtime, only
+	 * one of them should be available.
+	 * 
+	 * TODO Comment contains references to datefield bundles. Keep up-to-date.
 	 */
 	protected void createDateField(Composite parent) {
 		dateField = new DateField(parent);
@@ -223,19 +234,6 @@ public class LineItemView extends AbstractView {
 				lineItem.setAmount(event.getNewValue());
 			}			
 		});
-		
-//		amountText.addModifyListener(new ModifyListener() {
-//			public void modifyText(ModifyEvent event) {
-//				if (lineItem == null) return;
-//				try {
-//					Money money = MoneyConverter.convertStringToMoney(amountText.getText());
-//					lineItem.setAmount(money);
-//					amountText.setBackground(null);
-//				} catch (MoneyConversionException e) {
-//					amountText.setBackground(error);
-//				}
-//			}			
-//		});
 	}
 
 	private void createExchangeRateLabel(Composite parent) {
@@ -275,13 +273,6 @@ public class LineItemView extends AbstractView {
 			}			
 		});
 	}
-
-	/**
-	 * This might be a little excessive... The MoneyConversionException
-	 * class is used by the {@link LineItemView#convertStringToMoney(String)} method
-	 * to pass error messages back to the user.
-	 */
-
 	
 	void update() {
 		if (lineItem == null) {
