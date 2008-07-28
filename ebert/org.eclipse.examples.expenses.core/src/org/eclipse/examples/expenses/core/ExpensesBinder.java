@@ -12,11 +12,11 @@ package org.eclipse.examples.expenses.core;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class ExpensesBinder extends ObjectWithProperties implements Serializable {
 
+	// TODO Make this more dynamic
 	private static final ExpenseType[] EXPENSE_TYPES = new ExpenseType[] {
 				new ExpenseType("Air Travel", 0),
 				new ExpenseType("Other Travel", 1),
@@ -28,11 +28,7 @@ public class ExpensesBinder extends ObjectWithProperties implements Serializable
 				new ExpenseType("Other", 7)
 			};
 	
-	private static final String REPORTS_PROPERTY = "reports";
-
-	/*
-	 * TODO This will just get messy when we serialize. Need smarter persistence.
-	 */
+	public static final String REPORTS_PROPERTY = "reports";
 
 	public static ExpenseType[] getTypes() {
 		return EXPENSE_TYPES;
@@ -44,9 +40,14 @@ public class ExpensesBinder extends ObjectWithProperties implements Serializable
 		return (ExpenseReport[]) reports.toArray(new ExpenseReport[reports.size()]) ;
 	}
 
-	public void addExpenseReport(ExpenseReport expenseReport) {
-		reports.add(expenseReport);
-		firePropertyChanged(REPORTS_PROPERTY, null, getReports());
+	public void addExpenseReport(ExpenseReport report) {
+		reports.add(report);
+		fireCollectionEvent(REPORTS_PROPERTY, reports, OBJECT_ADDED, report);
+	}
+
+	public void removeExpenseReport(ExpenseReport report) {
+		if (!reports.remove(report)) return;
+		fireCollectionEvent(REPORTS_PROPERTY, reports, OBJECT_REMOVED, report);
 	}
 	
 	
