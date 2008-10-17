@@ -13,8 +13,6 @@ package org.eclipse.examples.expenses.views;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
-import org.eclipse.jface.viewers.SelectionChangedEvent;
-import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
@@ -52,6 +50,4 @@ public abstract class AbstractView extends ViewPart {
 	protected void asyncExec(Runnable runnable) {
 		getViewSite().getWorkbenchWindow().getShell().getDisplay().asyncExec(runnable);
 	}
-
-	public abstract Viewer getViewer();
 }
