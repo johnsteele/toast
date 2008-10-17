@@ -10,6 +10,10 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.views;
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.eclipse.examples.expenses.core.CollectionPropertyChangeEvent;
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.jface.util.IPropertyChangeListener;
@@ -30,13 +34,51 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
+/**
+ * The BinderView is used to view instances of {@link ExpensesBinder}.
+ * 
+ * <p>This example does change notification the traditional/hard-way, making
+ * extensive use of the Observer pattern by installing dozens of listeners
+ * on the objects being displayed. When one of the objects changes, the
+ * receiver is notified of the change through the listeners and updates
+ * accordingly.
+ *  
+ * @see ExpensesBinder
+ * @see AbstractView
+ * @author wayne
+ *
+ */
 public class BinderView extends AbstractView {
 
 	public static final String ID = BinderView.class.getName();
 	
-	private ListViewer viewer;
-
-	private IStructuredContentProvider contentProvider = new IStructuredContentProvider() {
+	ListViewer viewer;
+	Button removeButton;
+	Button addButton;
+	
+	ExpensesBinder expensesBinder;
+	
+	/**
+	 * When the list viewer is created, this instance is given as its content
+	 * provider via the
+	 * {@link ListViewer#setContentProvider(org.eclipse.jface.viewers.IContentProvider)}
+	 * method.
+	 * 
+	 * <p>
+	 * The contentProvider is responsible for providing content for the
+	 * {@link ListViewer} that takes up most of the space in this view. When the
+	 * list viewer's
+	 * <em>input<em> is changed via the {@link ListViewer#setInput(Object)} method, this
+	 * content provider is asked to provide reasonable content based on that input.
+	 */
+	IStructuredContentProvider contentProvider = new IStructuredContentProvider() {
+		/**
+		 * When asked to get the elements that are to be displayed by the viewer,
+		 * this method returns an array of {@link ExpenseReport} instances owned
+		 * by the input object (an instance of {@link ExpensesBinder}). If the
+		 * input is anything other than an instance of {@link ExpensesBinder}, a
+		 * generic empty array is returned.
+		 */
 		public Object[] getElements(Object input) {
 			if (input instanceof ExpensesBinder) {
 				return ((ExpensesBinder)input).getReports();
@@ -44,8 +86,12 @@ public class BinderView extends AbstractView {
 			return new Object[0];
 		}
 		
+		/**
+		 * When the instance is disposed, any previously installed listeners
+		 * are cleaned up.
+		 */
 		public void dispose() {
-			
+			unhookListeners(expensesBinder);
 		}
 
 		public void inputChanged(Viewer viewer, Object oldBinder, Object newBinder) {
@@ -54,7 +100,7 @@ public class BinderView extends AbstractView {
 		}			
 	};
 
-	private LabelProvider labelProvider = new LabelProvider() {
+	LabelProvider labelProvider = new LabelProvider() {
 		public String getText(Object report) {
 			return ((ExpenseReport)report).getTitle();
 		}
@@ -64,17 +110,50 @@ public class BinderView extends AbstractView {
 		}
 	};
 
-	private Button removeButton;
-
-	private Button addButton;
-
-	/*
-	 * TODO This listener is a dirty hack. Clean it up.
+	/**
+	 * The binderListener listens for property changes on an instance of
+	 * {@link ExpensesBinder}. When a property change occurs, the viewer 
+	 * (an instance of {@link ListViewer} is forced to refresh and listeners
+	 * are updated.
 	 */
 	IPropertyChangeListener binderListener = new IPropertyChangeListener() {
 		public void propertyChange(PropertyChangeEvent event) {
-			viewer.refresh();
-			hookListeners(getBinder());
+			/*
+			 * First, we refresh the viewer. If the PropertyChangeEvent is a
+			 * result of an addition or subtraction of an ExpenseReport, 
+			 * this refresh will reflect that change in the viewer.
+			 * 
+			 * Then, we hook listeners on the binder. This is done to ensure
+			 * that listeners are hooked onto any ExpenseReport instances
+			 * that have been added.
+			 * 			 * 
+			 * TODO Remove listeners when expense reports are removed from a binder.
+			 * 
+			 * TODO Clean up this dirty hack.
+			 */
+			if (event instanceof CollectionPropertyChangeEvent) {
+				handleCollectionChangeEvent((CollectionPropertyChangeEvent)event);
+			} else {
+				 /* This implementation is a bit like using a sledgehammer to hammer
+				 * in a finishing nail; refreshing the entire viewer and hooking listeners
+				 * on objects that very likely already have listeners on them is...
+				 * excessive. However, in the absense of more information, there
+				 * really is listte more that we can do than to refresh the viewer
+				 */ 
+				viewer.refresh();
+				hookListeners(getBinder());
+			}
+		}
+
+		private void handleCollectionChangeEvent(CollectionPropertyChangeEvent event) {
+			for(int index=0;index<event.added.length;index++) {
+				hookListeners((ExpenseReport)event.added[index]);
+			}
+			for(int index=0;index<event.removed.length;index++) {
+				unhookListeners((ExpenseReport)event.removed[index]);
+			}
+			viewer.add(event.added);
+			viewer.remove(event.removed);
 		}		
 	};
 	
@@ -96,8 +175,6 @@ public class BinderView extends AbstractView {
 			});
 		}
 	};
-
-	private ExpensesBinder expensesBinder;
 
 	public void createPartControl(Composite parent) {
 		parent.setLayout(new GridLayout(1, true));
@@ -124,6 +201,7 @@ public class BinderView extends AbstractView {
 
 		removeButton = new Button(getButtonArea(), SWT.PUSH);
 		removeButton.setText("Remove");
+		//TODO Implement some behaviour for the Remove button
 		
 		updateButtons();
 		

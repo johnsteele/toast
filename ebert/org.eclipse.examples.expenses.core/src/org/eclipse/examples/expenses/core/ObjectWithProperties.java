@@ -11,6 +11,7 @@
 package org.eclipse.examples.expenses.core;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Properties;
 
@@ -92,7 +93,10 @@ public abstract class ObjectWithProperties implements Serializable {
 		if (listenerList == null) return;
 		if (listenerList.isEmpty()) return;
 		
-		PropertyChangeEvent event = new PropertyChangeEvent(this, propertyName, null, collection);
+		Object[] added = eventType == OBJECT_ADDED ? new Object[] {object} : new Object[0];
+		Object[] removed = eventType == OBJECT_REMOVED ? new Object[] {object} : new Object[0];
+		
+		PropertyChangeEvent event = new CollectionPropertyChangeEvent(this, propertyName, collection, added, removed);
 		Object[] listeners = listenerList.getListeners();
 		for (int index=0;index<listeners.length;index++) {
 			IPropertyChangeListener listener = (IPropertyChangeListener) listeners[index];
@@ -168,6 +172,23 @@ public abstract class ObjectWithProperties implements Serializable {
 		return ExpensesCoreActivator.getDefault().getEventAdmin();
 	}
 
+	/**
+	 * This method returns an array containing those
+	 * {@link IPropertyChangeListener} instances that have been added to the
+	 * receiver.
+	 * 
+	 * <p>
+	 * This method is really only intended for testing purposes; as such, the
+	 * implementation is as complex as it needs to be (more specifically, it's
+	 * not all that complex).
+	 * 
+	 * @return an array of {@link IPropertyChangeListener} instances that have
+	 *         been added to the receiver.
+	 */
+	public Object[] getPropertyChangeListeners() {
+		return listenerList.getListeners();
+	}
+	
 	public synchronized void addPropertyChangeListener(IPropertyChangeListener listener) {
 		if (listenerList == null) listenerList = new ListenerList();
 		listenerList.add(listener);
