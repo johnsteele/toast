@@ -86,10 +86,10 @@ import org.osgi.service.event.EventHandler;
  */
 public class ExpenseReportView extends AbstractView {
 
-	private static final int DATE_COLUMN = 0;
-	private static final int TYPE_COLUMN = 1;
-	private static final int AMOUNT_COLUMN = 2;
-	private static final int COMMENT_COLUMN = 3;
+	static final int DATE_COLUMN = 0;
+	static final int TYPE_COLUMN = 1;
+	static final int AMOUNT_COLUMN = 2;
+	static final int COMMENT_COLUMN = 3;
 
 	/**
 	 * As a matter of convenience, the ID of this instance is the same
@@ -111,7 +111,7 @@ public class ExpenseReportView extends AbstractView {
 	 * {@link ExpenseReport} for input (indirectly via the
 	 * {@link Viewer#setInput(Object)} method).
 	 */
-	IContentProvider contentProvider = new IStructuredContentProvider() {
+	IStructuredContentProvider contentProvider = new IStructuredContentProvider() {
 		public Object[] getElements(Object input) {
 			if (input instanceof ExpenseReport) {
 				return ((ExpenseReport)input).getLineItems();
