@@ -1,5 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2008 The Eclipse Foundation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *    The Eclipse Foundation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.examples.expenses.views;
 
+import static org.junit.Assert.*;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -9,6 +20,8 @@ import java.text.DateFormat;
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.LineItem;
+import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.jface.viewers.ViewerSorter;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -84,4 +97,35 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 		fail();
 	}
 	
+	@Test
+	public void testThatLabelPropertiesAreCorrectlyIdentified() throws Exception {
+		assertTrue(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.DATE_PROPERTY));
+		assertTrue(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.AMOUNT_PROPERTY));
+		assertTrue(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.TYPE_PROPERTY));
+		assertTrue(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.COMMENT_PROPERTY));
+	}
+	
+	/**
+	 * We assume at this point that the workbench's selection service works
+	 * as designed/documented. We're not testing that particular feature here.
+	 * What we are testing is that our code that responds to the workbench
+	 * selection service does what it's supposed to.
+	 */
+	@Test
+	public void testWorkbenchSelectionOfExpenseReport() throws Exception {
+		ExpenseReport newReport = new ExpenseReport("New Expense Report");
+		LineItem newLineItem = new LineItem();
+		newReport.addLineItem(newLineItem);
+		
+		view.selectionListener.selectionChanged(null, new StructuredSelection(newReport));
+		
+		processEvents();
+		
+		assertSame(newReport, view.expenseReport);
+		assertEquals("New Expense Report", view.titleText.getText());
+		assertTrue(view.viewer.getTable().isEnabled());
+		assertSame(view.viewer.getElementAt(0), newLineItem);
+	}
+	
+
 }

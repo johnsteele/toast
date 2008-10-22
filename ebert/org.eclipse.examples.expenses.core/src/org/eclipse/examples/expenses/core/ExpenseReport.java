@@ -30,6 +30,13 @@ public class ExpenseReport extends ObjectWithProperties implements Serializable 
 		this.title = title;
 	}
 
+	/**
+	 * This method answers an array of {@link LineItem}s owned by the receiver.
+	 * Note that this method does not guarantee that the returned value will
+	 * be the same object on subsequent calls.
+	 * 
+	 * @return an array of {@link LineItem} instances.
+	 */
 	public LineItem[] getLineItems() {
 		return (LineItem[]) lineItems.toArray(new LineItem[lineItems.size()]);
 	}

@@ -99,12 +99,14 @@ public class ExpenseReportView extends AbstractView {
 	public static final String ID = ExpenseReportView.class.getName();
 	
 	TableViewer viewer;
+	
+	// TODO I'd rather these not be public
 	public TableColumn dateColumn;
 	public TableColumn commentColumn;
 	
-	private ExpenseReport expenseReport;
+	ExpenseReport expenseReport;
 
-	private Text titleText;
+	Text titleText;
 	
 	/**
 	 * This field provides an {@link IContentProvider} that takes an
@@ -210,9 +212,25 @@ public class ExpenseReportView extends AbstractView {
 	final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
 		
 	/**
-	 * The sorter determines how the table is sorted. This sorter
-	 * sorts by date and type. That is, items are first sorted by
-	 * date; if two items have the same date, then they are sorted by type.
+	 * {@link LineItem}s are sorted in the viewer by two criteria. They are
+	 * first sorted chronologically (earlier to later) by the date. If two line
+	 * items have the same date, they are then sorted by their type (types are
+	 * sorted according to their ordinality (lowest to highest).
+	 * <p>
+	 * It is possible that either or both of the date and type can be
+	 * <code>null</code>, so we need to account for that.
+	 * <ul>
+	 * <li>Line items that have the date set are placed before those that are
+	 * not.</li>
+	 * <li>Those line items with the same date (including <code>null</code>) are
+	 * sorted by their type</li>
+	 * </ul>
+	 * For those line items that share the same date,
+	 * <ul>
+	 * <li>Line items with the type set are placed before those that are not.</li>
+	 * <li>Those line items with the same type (including <code>null</code>) are
+	 * not explicitly sorted in any particular order.</li>
+	 * </ul>
 	 */
 	ViewerSorter dateSorter = new ViewerSorter() {
 		/**
