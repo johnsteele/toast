@@ -12,9 +12,6 @@ package org.eclipse.examples.expenses.views;
 
 import java.text.DateFormat;
 import java.util.Date;
-import java.util.Dictionary;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 import org.eclipse.examples.expenses.core.ExpenseReport;
@@ -22,8 +19,6 @@ import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.core.ObjectWithProperties;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
-import org.eclipse.jface.util.IPropertyChangeListener;
-import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ISelection;
@@ -51,10 +46,12 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISelectionService;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchPartSite;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 
@@ -98,7 +95,7 @@ public class ExpenseReportView extends AbstractView {
 	 */
 	public static final String ID = ExpenseReportView.class.getName();
 	
-	TableViewer viewer;
+	TableViewer lineItemTableViewer;
 	
 	// TODO I'd rather these not be public
 	public TableColumn dateColumn;
@@ -107,6 +104,7 @@ public class ExpenseReportView extends AbstractView {
 	ExpenseReport expenseReport;
 
 	Text titleText;
+	Button removeButton;
 	
 	/**
 	 * This field provides an {@link IContentProvider} that takes an
@@ -270,7 +268,8 @@ public class ExpenseReportView extends AbstractView {
 		 */
 		int compareDates(Date date1, Date date2) {
 			if (date1 == null && date2 == null) return 0;
-			if (date1 == null) return -1;
+			if (date1 == null) return 1;
+			if (date2 == null) return -1;
 			return date1.compareTo(date2);
 		}
 
@@ -280,7 +279,8 @@ public class ExpenseReportView extends AbstractView {
 		 */
 		int compareTypes(ExpenseType type1, ExpenseType type2) {
 			if (type1 == null && type2 == null) return 0;
-			if (type1 == null) return -1;
+			if (type1 == null) return 1;
+			if (type2 == null) return -1;
 			return type1.compareTo(type2);
 		}
 	};
@@ -334,6 +334,8 @@ public class ExpenseReportView extends AbstractView {
 	 * @see #dispose()
 	 */
 	ServiceRegistration lineItemChangedHandlerService;
+	private Button addButton;
+	private Composite titleArea;
 			
 	/**
 	 * This is where it all happens. This method is called to actually create
@@ -343,28 +345,154 @@ public class ExpenseReportView extends AbstractView {
 	public void createPartControl(Composite parent) {
 		parent.setLayout(new GridLayout(1, false));
 		
-		Composite title = createTitleArea(parent);
-		title.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		
-		viewer = createTableViewer(parent);
-		viewer.getTable().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		getSite().setSelectionProvider(viewer);
-		
-		Composite buttons = createButtonArea(parent);	
-		buttons.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		
-		createAddButton(buttons);
-		createRemoveButton(buttons);
+		createTitleArea(parent);		
+		createLineItemTableViewer(parent);		
+		createButtons(parent);	
 				
 		customizeView(parent);
 		
-		hookSelectionListener();
+		hookSelectionListener();		
+		startEventHandlers();
+
+		updateRemoveButton();
+	}
+
+	/**
+	 * This method creates an area at the top of the view for title information.
+	 * It populates that area with a {@link Label} and a {@link Text}. A
+	 * {@link ModifyListener} is added to the text which notifies the object
+	 * model of changes as the user types them. This method assumes that the
+	 * parent {@link Composite} has a {@link GridLayout} with one column for a
+	 * layout manager.
+	 * 
+	 * @param parent A composite into which the title area will be created.
+	 */
+	void createTitleArea(Composite parent) {
+		titleArea = new Composite(parent, SWT.NONE);		
+		titleArea.setLayout(new GridLayout(2, false));
+		Label titleLabel = new Label(titleArea, SWT.NONE);
+		titleLabel.setText("Title:");
 		
-		BundleContext context = ExpenseReportingUI.getDefault().getContext();
-		startExpenseReportChangedHandlerService(context);
-		startLineItemAddedHandlerService(context);
-		startLineItemRemovedHandlerService(context);
-		startLineItemChangedHandlerService(context);
+		titleText = new Text(titleArea, SWT.BORDER);
+		titleText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		titleText.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent e) {
+				if (expenseReport == null) return;
+				expenseReport.setTitle(titleText.getText());
+			}			
+		});
+	
+		titleArea.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+	}
+
+	/**
+	 * This method creates a {@link TableViewer} for displaying {@link LineItem}
+	 * instances. The table has four columns. Further, this table is given to
+	 * the view's {@link IWorkbenchPartSite} as the selection provider for the
+	 * view; selections in the {@link #lineItemTableViewer} will be directed to
+	 * the workbench {@link ISelectionService}.This method assumes that the
+	 * parent {@link Composite} has a {@link GridLayout} with one column for a
+	 * layout manager.
+	 * 
+	 * @param parent A composite into which the {@link TableViewer} will be created.
+	 */
+	void createLineItemTableViewer(Composite parent) {
+		lineItemTableViewer = new TableViewer(parent, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
+		lineItemTableViewer.getTable().setHeaderVisible(true);	
+		
+		createDateColumn(lineItemTableViewer);
+		createTypeColumn(lineItemTableViewer);
+		createAmountColumn(lineItemTableViewer);
+		createCommentColumn(lineItemTableViewer);
+		
+		lineItemTableViewer.setContentProvider(contentProvider);
+		lineItemTableViewer.setLabelProvider(labelProvider);
+		lineItemTableViewer.setSorter(dateSorter);
+	
+		getSite().setSelectionProvider(lineItemTableViewer);
+		
+		lineItemTableViewer.getTable().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+	}
+
+	void createDateColumn(TableViewer viewer) {
+		dateColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
+		dateColumn.setText("Date");
+		dateColumn.setWidth(120);		
+	}
+
+	void createTypeColumn(TableViewer viewer) {
+		TableColumn typeColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
+		typeColumn.setText("Type");
+		typeColumn.setWidth(180);
+	}
+
+	void createAmountColumn(TableViewer viewer) {
+		TableColumn amountColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
+		amountColumn.setText("Amount");
+		amountColumn.setWidth(120);
+	}
+
+	void createCommentColumn(TableViewer viewer) {
+		commentColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
+		commentColumn.setText("Comment");
+		commentColumn.setWidth(200);
+	}
+
+	/**
+	 * This method creates and populates an area for buttons.
+	 * This method assumes that the parent {@link Composite} has
+	 * a {@link GridLayout} with one column for a layout manager.
+	 * 
+	 * @see AbstractView#createButtonArea(Composite)
+	 * 
+	 * @param parent A composite into which the buttons will be created.
+	 */
+	void createButtons(Composite parent) {
+		Composite buttonArea = createButtonArea(parent);
+
+		createAddButton(buttonArea);
+		createRemoveButton(buttonArea);
+
+		buttonArea.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+	}
+	
+	void createAddButton(Composite parent) {
+		Button addButton = new Button(parent, SWT.PUSH);
+		addButton.setText("Add");
+		addButton.addSelectionListener(new SelectionListener() {
+			public void widgetSelected(SelectionEvent arg0) {
+				if (expenseReport == null) return;
+				expenseReport.addLineItem(new LineItem());
+			}
+	
+			public void widgetDefaultSelected(SelectionEvent arg0) {
+			}			
+		});
+	}
+
+	void createRemoveButton(Composite parent) {
+		removeButton = new Button(parent, SWT.PUSH);
+		removeButton.setText("Remove");
+		removeButton.addSelectionListener(new SelectionListener() {
+			public void widgetSelected(SelectionEvent arg0) {
+				if (expenseReport == null) return;
+				LineItem lineItem = (LineItem) ((IStructuredSelection)lineItemTableViewer.getSelection()).getFirstElement();
+				if (lineItem == null) return;
+				expenseReport.removeLineItem(lineItem);
+			}
+	
+			public void widgetDefaultSelected(SelectionEvent arg0) {
+			}			
+		});
+		/*
+		 * Add a listener to the selection on the viewer. When the
+		 * selection changes, update the state of the remove button.
+		 */
+		lineItemTableViewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			public void selectionChanged(SelectionChangedEvent event) {
+				updateRemoveButton();
+			}			
+		});
 	}
 
 	/**
@@ -375,13 +503,28 @@ public class ExpenseReportView extends AbstractView {
 	 * user needs to see. Bug 239865 addresses this issue.
 	 * @return
 	 */
-	protected DateFormat getDateFormat() {
+	DateFormat getDateFormat() {
 		return dateFormat;
 	}
 
 	/**
+	 * This method starts the various services that handle events
+	 * generated by the domain model objects.
+	 */
+	void startEventHandlers() {
+		BundleContext context = ExpenseReportingUI.getDefault().getContext();
+		startExpenseReportChangedHandlerService(context);
+		startLineItemAddedHandlerService(context);
+		startLineItemRemovedHandlerService(context);
+		startLineItemChangedHandlerService(context);
+	}
+	
+	/**
 	 * This method starts an {@link EventHandler} service that listens for
-	 * property changes to {@link LineItem} instances.
+	 * property changes to {@link LineItem} instances. This event handler
+	 * is used by the OSGi {@link EventAdmin} service to handle matching
+	 * events as they occur. All subclasses of {@link ObjectWithProperties}
+	 * dispatch events through the {@link EventAdmin} service.
 	 * 
 	 * <p>
 	 * This service listens on the
@@ -411,7 +554,7 @@ public class ExpenseReportView extends AbstractView {
 				 */
 				asyncExec(new Runnable() {
 					public void run() {
-						viewer.update(source, new String[] {property});
+						lineItemTableViewer.update(source, new String[] {property});
 					}
 				});
 				
@@ -431,7 +574,7 @@ public class ExpenseReportView extends AbstractView {
 				if (event.getProperty(ObjectWithProperties.SOURCE) != expenseReport) return;
 				asyncExec(new Runnable() {
 					public void run() {
-						viewer.add(event.getProperty(ObjectWithProperties.OBJECT_ADDED));
+						lineItemTableViewer.add(event.getProperty(ObjectWithProperties.OBJECT_ADDED));
 					}
 				});
 			}			
@@ -449,7 +592,7 @@ public class ExpenseReportView extends AbstractView {
 				if (event.getProperty(ObjectWithProperties.SOURCE) != expenseReport) return;
 				asyncExec(new Runnable() {
 					public void run() {
-						viewer.remove(event.getProperty(ObjectWithProperties.OBJECT_REMOVED));
+						lineItemTableViewer.remove(event.getProperty(ObjectWithProperties.OBJECT_REMOVED));
 					}
 				});
 			}			
@@ -467,7 +610,11 @@ public class ExpenseReportView extends AbstractView {
 				if (event.getProperty(ObjectWithProperties.SOURCE) != expenseReport) return;
 				final String property = (String)event.getProperty(ObjectWithProperties.PROPERTY_NAME);
 				if (ExpenseReport.TITLE_PROPERTY.equals(property)) {
-					updateTitleField();
+					asyncExec(new Runnable() {
+						public void run() {
+							updateTitleField();
+						}
+					});
 				}				
 			}			
 		};
@@ -478,14 +625,6 @@ public class ExpenseReportView extends AbstractView {
 		expenseReportChangedEventHandlerService = context.registerService(EventHandler.class.getName(), handler, properties);
 	}
 	
-	protected void updateTitleField() {
-		asyncExec(new Runnable() {
-			public void run() {
-				titleText.setText(expenseReport == null ? "" : expenseReport.getTitle());
-			}
-		});
-	}
-
 	public void dispose() {
 		lineItemAddedHandlerService.unregister();
 		lineItemRemovedHandlerService.unregister();
@@ -508,83 +647,7 @@ public class ExpenseReportView extends AbstractView {
 		selectionService.removeSelectionListener(selectionListener);
 	}
 
-	private Composite createTitleArea(Composite parent) {
-		Composite titleArea = new Composite(parent, SWT.NONE);
-		titleArea.setLayout(new GridLayout(2, false));
-		Label titleLabel = new Label(titleArea, SWT.NONE);
-		titleLabel.setText("Title:");
-		
-		titleText = new Text(titleArea, SWT.BORDER);
-		titleText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		titleText.addModifyListener(new ModifyListener() {
-			public void modifyText(ModifyEvent e) {
-				expenseReport.setTitle(titleText.getText());
-			}			
-		});
-		return titleArea;
-	}
-
-	private TableViewer createTableViewer(Composite parent) {
-		TableViewer viewer = new TableViewer(parent, SWT.BORDER | SWT.FULL_SELECTION | SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL);
-		viewer.getTable().setHeaderVisible(true);	
-		
-		createDateColumn(viewer);
-		createTypeColumn(viewer);
-		createAmountColumn(viewer);
-		createCommentColumn(viewer);
-		
-		viewer.setContentProvider(contentProvider);
-		viewer.setLabelProvider(labelProvider);
-		viewer.setSorter(dateSorter);
-
-		getSite().setSelectionProvider(viewer);
-		
-		return viewer;
-	}
-	
-	private void createAddButton(Composite parent) {
-		Button addButton = new Button(parent, SWT.PUSH);
-		addButton.setText("Add");
-		addButton.addSelectionListener(new SelectionListener() {
-			public void widgetSelected(SelectionEvent arg0) {
-				if (expenseReport == null) return;
-				expenseReport.addLineItem(new LineItem());
-			}
-
-			public void widgetDefaultSelected(SelectionEvent arg0) {
-
-			}			
-		});
-	}
-
-	private void createRemoveButton(Composite parent) {
-		final Button removeButton = new Button(parent, SWT.PUSH);
-		removeButton.setText("Remove");
-		removeButton.addSelectionListener(new SelectionListener() {
-			public void widgetSelected(SelectionEvent arg0) {
-				if (expenseReport == null) return;
-				LineItem lineItem = (LineItem) ((IStructuredSelection)viewer.getSelection()).getFirstElement();
-				if (lineItem == null) return;
-				expenseReport.removeLineItem(lineItem);
-			}
-
-			public void widgetDefaultSelected(SelectionEvent arg0) {
-
-			}			
-		});
-		/*
-		 * Add a listener to the selection on the viewer. When the
-		 * selection changes, update the state of the remove button.
-		 */
-		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {
-				updateRemoveButton(removeButton);
-			}			
-		});
-		updateRemoveButton(removeButton);
-	}
-	
-	void updateRemoveButton(Button removeButton) {
+	void updateRemoveButton() {
 		removeButton.setEnabled(viewerHasSelection());
 	}
 
@@ -593,7 +656,7 @@ public class ExpenseReportView extends AbstractView {
 	 * selection; it returns false otherwise.
 	 */
 	boolean viewerHasSelection() {
-		return !((IStructuredSelection)viewer.getSelection()).isEmpty();
+		return !((IStructuredSelection)lineItemTableViewer.getSelection()).isEmpty();
 	}
 
 	protected void handleSelection(ISelection selection) {
@@ -625,42 +688,40 @@ public class ExpenseReportView extends AbstractView {
 		 */
 		asyncExec(new Runnable() {
 			public void run() {
-				titleText.setText(expenseReport == null ? "" : expenseReport.getTitle());
-				viewer.setInput(expenseReport);
-				viewer.getTable().setEnabled(expenseReport != null);
+				updateTitleField();
+				updateLineItemsTable();
 			}			
 		});
 	}
 
-	final void createCommentColumn(TableViewer viewer) {
-		commentColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
-		commentColumn.setText("Comment");
-		commentColumn.setWidth(200);
-	}
-	
-	final void createAmountColumn(TableViewer viewer) {
-		TableColumn amountColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
-		amountColumn.setText("Amount");
-		amountColumn.setWidth(120);
-	}
-	
-	final void createTypeColumn(TableViewer viewer) {
-		TableColumn typeColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
-		typeColumn.setText("Type");
-		typeColumn.setWidth(180);
-	}
-	
-	void createDateColumn(TableViewer viewer) {
-		dateColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
-		dateColumn.setText("Date");
-		dateColumn.setWidth(120);		
-	}
-	
 	public void setFocus() {
-		viewer.getControl().setFocus();
+		lineItemTableViewer.getControl().setFocus();
 	}
 
 	public Viewer getViewer() {
-		return viewer;
+		return lineItemTableViewer;
+	}
+
+	/**
+	 * This method, curiously enough, updates the title field to reflect the
+	 * current state of the title property of the current {@link ExpenseReport}.
+	 * This method must be run in the UI thread.
+	 */
+	void updateTitleField() {
+		titleText.setText(expenseReport == null ? "" : expenseReport.getTitle());
+	}
+	
+	/**
+	 * This method, oddly enough, updates the table of {@link LineItem}s from
+	 * the current {@link ExpenseReport} using a bit of a sledgehammer approach.
+	 * As a result of running this method, the entire table is refreshed and
+	 * it's contents entirely re-populated. This method must be run in the UI
+	 * thread.
+	 * 
+	 * @param expenseReport
+	 */
+	void updateLineItemsTable() {
+		lineItemTableViewer.setInput(expenseReport);
+		lineItemTableViewer.getTable().setEnabled(expenseReport != null);
 	}
 }

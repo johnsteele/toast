@@ -10,9 +10,11 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.views;
 
-import static org.junit.Assert.*;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.text.DateFormat;
@@ -21,10 +23,9 @@ import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.jface.viewers.StructuredSelection;
-import org.eclipse.jface.viewers.ViewerSorter;
 import org.junit.Before;
 import org.junit.Test;
-
+import org.osgi.framework.BundleContext;
 
 public class ExpenseReportViewTests extends WorkbenchTests {
 	ExpenseReportView view;
@@ -41,6 +42,10 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 		report.addLineItem(lineItemWithType);
 		lineItemWithoutType = new LineItem();
 		report.addLineItem(lineItemWithoutType);
+		
+		view.setReport(report);
+		
+		processEvents();
 	}
 	
 	@Test
@@ -64,6 +69,8 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 	 * On RAP, the locale is determined from the request header. Since we're
 	 * running these tests on RCP, the following should do it. We'll sort out
 	 * how to test the RAP case in other tests.
+	 * 
+	 * @see ExpenseReportView#getDateFormat()
 	 */
 	@Test
 	public void testThatDateFormatUsesCurrentLocale() throws Exception {
@@ -123,9 +130,146 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 		
 		assertSame(newReport, view.expenseReport);
 		assertEquals("New Expense Report", view.titleText.getText());
-		assertTrue(view.viewer.getTable().isEnabled());
-		assertSame(view.viewer.getElementAt(0), newLineItem);
+		assertTrue(view.lineItemTableViewer.getTable().isEnabled());
+		assertSame(view.lineItemTableViewer.getElementAt(0), newLineItem);
 	}
 	
-
+	/**
+	 * This test confirms that the service that listens for 
+	 * changes to a {@link LineItem} has been started. This service
+	 * should have been started as part of the process of creating the
+	 * view.
+	 * 
+	 * @see ExpenseReportView#startLineItemChangedHandlerService(BundleContext)
+	 * @throws Exception
+	 */
+	@Test
+	public void testLineItemChangedHandlerServiceStarted() throws Exception {
+		// If the service has not been registered, this should throw an exception.
+		view.lineItemChangedHandlerService.getReference();		
+	}
+	
+	/**
+	 * @see ExpenseReportView#dispose()
+	 * @throws Exception
+	 */
+	@Test
+	public void testLineItemChangedHandlerServiceStopped() throws Exception {
+		getActivePage().hideView(view);
+		try {
+			view.lineItemChangedHandlerService.getReference();
+			fail("Service is still registered.");
+		} catch (IllegalStateException e) {
+			/*
+			 * If the service has been unregistered as we expect, then
+			 * an IllegalStateException will be thrown. This is expected
+			 * behaviour.
+			 */
+		}
+	}
+	
+	/**
+	 * @see ExpenseReportView#startLineItemRemovedHandlerService(BundleContext)
+	 * @throws Exception
+	 */
+	@Test
+	public void testLineItemAddedHandlerServiceStarted() throws Exception {
+		// If the service has not been registered, this should throw an exception.
+		view.lineItemAddedHandlerService.getReference();		
+	}
+	
+	/**
+	 * @see ExpenseReportView#dispose()
+	 * @throws Exception
+	 */
+	@Test
+	public void testLineItemAddedHandlerServiceStopped() throws Exception {
+		getActivePage().hideView(view);
+		try {
+			view.lineItemAddedHandlerService.getReference();
+			fail("Service is still registered.");
+		} catch (IllegalStateException e) {
+			/*
+			 * If the service has been unregistered as we expect, then
+			 * an IllegalStateException will be thrown. This is expected
+			 * behaviour.
+			 */
+		}
+	}
+	
+	/**
+	 * @see ExpenseReportView#startLineItemRemovedHandlerService(BundleContext)
+	 * @throws Exception
+	 */
+	@Test
+	public void testLineItemRemovedHandlerServiceStarted() throws Exception {
+		// If the service has not been registered, this should throw an exception.
+		view.lineItemRemovedHandlerService.getReference();		
+	}
+	
+	/**
+	 * @see ExpenseReportView#dispose()
+	 * @throws Exception
+	 */
+	@Test
+	public void testLineItemRemovedHandlerServiceStopped() throws Exception {
+		getActivePage().hideView(view);
+		try {
+			view.lineItemRemovedHandlerService.getReference();
+			fail("Service is still registered.");
+		} catch (IllegalStateException e) {
+			/*
+			 * If the service has been unregistered as we expect, then
+			 * an IllegalStateException will be thrown. This is expected
+			 * behaviour.
+			 */
+		}
+	}
+	
+	/**
+	 * I am not aware of any mechanism to check to see if a particular
+	 * handler is registered with the selections service. For now, this
+	 * test will answer success.
+	 * 
+	 * TODO Confirm that the handler is indeed registered.
+	 */
+	@Test
+	public void testSelectionHandlerRegistered() {
+		
+	}
+	
+	/**
+	 * Likewise, I am not aware of any mechanism to check to see if a particular
+	 * handler is deregistered with the selections service.
+	 * 
+	 * TODO Confirm that the handler is indeed deregistered.
+	 */
+	@Test
+	public void testSelectionHandlerDeregistered() {
+		
+	}
+	
+	@Test
+	public void testRemoveButtonEnabledWhenLineItemSelected() throws Exception {
+		view.lineItemTableViewer.setSelection(new StructuredSelection(lineItemWithType));
+		processEvents();
+		assertTrue(view.removeButton.isEnabled());
+	}
+	
+	@Test
+	public void testRemoveButtonDisabledWhenNoLineItemSelected() throws Exception {
+		view.lineItemTableViewer.setSelection(StructuredSelection.EMPTY);
+		processEvents();
+		assertFalse(view.removeButton.isEnabled());
+	}
+	
+	@Test
+	public void testTitleFieldUpdated() throws Exception {
+		report.setTitle("New Title");
+		waitForAPropertyChangeEvent(report, ExpenseReport.TITLE_PROPERTY);
+		
+		processEvents();
+		
+		assertEquals("New Title", view.titleText.getText());
+	}
 }

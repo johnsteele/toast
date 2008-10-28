@@ -78,31 +78,6 @@ public class LineItemViewTests {
 	}
 	
 	@Test
-	public void testCreateAmountField() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testCreateExchangeRateField() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testCreateCommentField() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testHandleSelectionISelection() {
-		fail("Not yet implemented");
-	}
-
-	@Test
-	public void testHandleSelectionIStructuredSelection() {
-		fail("Not yet implemented");
-	}
-
-	@Test
 	public void testSetLineItem() {
 		fail("Not yet implemented");
 	}

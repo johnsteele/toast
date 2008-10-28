@@ -22,7 +22,7 @@ import org.osgi.service.event.EventHandler;
 public abstract class ObjectWithPropertiesTests {
 
 	protected Queue<PropertyChangeEvent> observerQueue = new LinkedList<PropertyChangeEvent>();
-	protected BlockingQueue<Event> eventQueue = new ArrayBlockingQueue<Event>(20);
+	protected BlockingQueue<Event> eventQueue;
 	protected ServiceRegistration registration;
 
 	/**
@@ -56,6 +56,7 @@ public abstract class ObjectWithPropertiesTests {
 	 */
 	@Before
 	public void registerEquinoxEventServiceHandler() throws BundleException {
+		eventQueue = new ArrayBlockingQueue<Event>(100);
 		
 		/*
 		 * The EventHandler is notified whenever a matching event is posted.

@@ -35,6 +35,7 @@ import com.ibm.icu.util.Calendar;
  * <tr><td>same</td><td>higher</td><td>same</td><td>lower</td><td>+1</td></tr>
  * <tr><td>same</td><td>lower</td><td>same</td><td><code>null</code></td><td>-1</td></tr>
  * <tr><td>same</td><td><code>null</code></td><td>same</td><td>lower</td><td>+1</td></tr>
+ * <tr><td><code>null</code></td><td><code>lower</code></td><td><code>null</code></td><td>higher</td><td>+1</td></tr>
  * </table>
  * 
  * @see ExpenseReportView#dateSorter
@@ -42,10 +43,12 @@ import com.ibm.icu.util.Calendar;
  * @throws Exception
  */
 public class ExpenseReportViewDateSorterTests extends WorkbenchTests {
-	LineItem earlier;
-	LineItem later;
 	ExpenseReportView view;
 	ViewerSorter sorter;
+	
+	LineItem noDateNoType;
+	LineItem earlier;
+	LineItem later;
 	LineItem lower;
 	LineItem higher;
 	
@@ -53,6 +56,9 @@ public class ExpenseReportViewDateSorterTests extends WorkbenchTests {
 	public void setUp() throws Exception {
 		view = (ExpenseReportView) getActivePage().showView(ExpenseReportView.ID);
 		sorter = view.dateSorter;
+		
+		noDateNoType = new LineItem();
+		noDateNoType.setDate(null);
 		
 		Calendar calendar = Calendar.getInstance();
 		earlier = new LineItem();
@@ -73,52 +79,54 @@ public class ExpenseReportViewDateSorterTests extends WorkbenchTests {
 	
 	@Test
 	public void testCompareEarlierWithLaterDate() throws Exception {
-		assertEquals(sorter.compare(null, earlier, later), -1);
+		assertEquals(-1, sorter.compare(null, earlier, later));
 	}
 
 	@Test
 	public void testCompareLaterWithEarlierDate() throws Exception {
-		assertEquals(sorter.compare(null, later, earlier), 1);
+		assertEquals(1, sorter.compare(null, later, earlier));
 	}
 	
 	@Test
 	public void testCompareEarlierWithNullDate() throws Exception {
-		assertEquals(sorter.compare(null, earlier, new LineItem()), -1);
+		assertEquals(-1, sorter.compare(null, earlier, noDateNoType));
 	}
 
 	@Test
 	public void testCompareNullWithEarlierDate() throws Exception {
-		assertEquals(sorter.compare(null, new LineItem(), earlier), 1);
+		assertEquals(1, sorter.compare(null, noDateNoType, earlier));
 	}
 
 	@Test
 	public void testCompareLowerWithHigherType() throws Exception {
-		assertEquals(sorter.compare(null, lower, higher), -1);
+		assertEquals(-1, sorter.compare(null, lower, higher));
 	}
 	
 	@Test
 	public void testCompareHigherWithLowerType() throws Exception {
-		assertEquals(sorter.compare(null, higher, lower), 1);
+		assertEquals(1, sorter.compare(null, higher, lower));
 	}
 	
 	@Test
 	public void testCompareLowerWithNullType() throws Exception {
-		assertEquals(sorter.compare(null, lower, new LineItem()), -1);
+		assertEquals(-1, sorter.compare(null, lower, noDateNoType));
 	}
 	
 	@Test
 	public void testCompareNullWithLowerType() throws Exception {
-		assertEquals(sorter.compare(null, new LineItem(), higher), 1);
+		assertEquals(1, sorter.compare(null, noDateNoType, higher));
 	}
 
 	@Test
 	public void testCompareLowerWithHigherTypeAndNullDate() throws Exception {
 		lower = new LineItem();
+		lower.setDate(null);
 		lower.setType(new ExpenseType("lower", 0));
 		
 		higher = new LineItem();
+		higher.setDate(null);
 		higher.setType(new ExpenseType("higher", 1));
 		
-		assertEquals(sorter.compare(null, lower, higher), -1);
+		assertEquals(-1, sorter.compare(null, lower, higher));
 	}
 }
