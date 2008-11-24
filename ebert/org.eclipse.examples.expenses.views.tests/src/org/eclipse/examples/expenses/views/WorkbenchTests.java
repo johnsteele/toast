@@ -31,7 +31,7 @@ public abstract class WorkbenchTests {
 	@BeforeClass
 	public static void setupPropertyChangeEventHandler() throws Exception {
 		ensureEventAdminServiceIsRunning();
-		eventQueue = new ArrayBlockingQueue<Event>(100);
+		eventQueue = new ArrayBlockingQueue<Event>(1000);
 		
 		/*
 		 * The EventHandler is notified whenever a matching event is posted.
@@ -93,15 +93,15 @@ public abstract class WorkbenchTests {
 		return PlatformUI.getWorkbench();
 	}
 
-	protected void waitForAPropertyChangeEvent(ExpenseReport source, String property) throws Exception {
-		while (true) {
-			Event event = eventQueue.take();
-			if (!event.getTopic().equals(ObjectWithProperties.PROPERTY_CHANGE_TOPIC)) continue;
-			if (event.getProperty(ObjectWithProperties.SOURCE) != source) continue;
-			if (!property.equals(event.getProperty(ObjectWithProperties.PROPERTY_NAME))) continue;
-			break;
-		}
-	}
+//	protected void waitForAPropertyChangeEvent(ExpenseReport source, String property) throws Exception {
+//		while (true) {
+//			Event event = eventQueue.take();
+//			if (!event.getTopic().equals(ObjectWithProperties.PROPERTY_CHANGE_TOPIC)) continue;
+//			if (event.getProperty(ObjectWithProperties.SOURCE) != source) continue;
+//			if (!property.equals(event.getProperty(ObjectWithProperties.PROPERTY_NAME))) continue;
+//			break;
+//		}
+//	}
 
 	protected static BundleContext getBundleContext() {
 		return ExpenseReportingUI.getDefault().getContext();

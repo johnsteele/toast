@@ -1,8 +1,11 @@
 package org.eclipse.examples.expenses.ui.fields.currency;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
-import java.util.Currency;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -11,6 +14,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.Shell;
 import org.junit.Before;
 import org.junit.Test;
+
+import com.ibm.icu.util.Currency;
 
 public class MoneyFieldTests {
 	Shell shell;
@@ -52,8 +57,8 @@ public class MoneyFieldTests {
 				Currency.getInstance(Locale.CANADA), 
 				Currency.getInstance(Locale.GERMANY)});
 	
-		assertSame(Currency.getInstance(Locale.CANADA), moneyField.currencyViewer.getElementAt(0));
-		assertSame(Currency.getInstance(Locale.GERMANY), moneyField.currencyViewer.getElementAt(1));
+		assertEquals(Currency.getInstance(Locale.CANADA), moneyField.currencyViewer.getElementAt(0));
+		assertEquals(Currency.getInstance(Locale.GERMANY), moneyField.currencyViewer.getElementAt(1));
 	}
 	
 	@Test
@@ -62,8 +67,8 @@ public class MoneyFieldTests {
 				Currency.getInstance(Locale.GERMANY), 
 				Currency.getInstance(Locale.CANADA)});
 	
-		assertSame(Currency.getInstance(Locale.GERMANY), moneyField.currencyViewer.getElementAt(0));
-		assertSame(Currency.getInstance(Locale.CANADA), moneyField.currencyViewer.getElementAt(1));
+		assertEquals(Currency.getInstance(Locale.CANADA), moneyField.currencyViewer.getElementAt(0));
+		assertEquals(Currency.getInstance(Locale.GERMANY), moneyField.currencyViewer.getElementAt(1));
 	}
 	
 	@Test

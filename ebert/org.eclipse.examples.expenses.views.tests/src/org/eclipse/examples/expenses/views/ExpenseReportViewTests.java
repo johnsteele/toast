@@ -17,8 +17,6 @@ import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import java.text.DateFormat;
-
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.LineItem;
@@ -26,6 +24,13 @@ import org.eclipse.jface.viewers.StructuredSelection;
 import org.junit.Before;
 import org.junit.Test;
 import org.osgi.framework.BundleContext;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
+import org.osgi.service.event.EventHandler;
+
+import com.ibm.icu.text.DateFormat;
+import com.ibm.icu.util.Currency;
+import com.ibm.icu.util.CurrencyAmount;
 
 public class ExpenseReportViewTests extends WorkbenchTests {
 	ExpenseReportView view;
@@ -36,9 +41,22 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 	@Before
 	public void setup() throws Exception {
 		view = (ExpenseReportView) getActivePage().showView(ExpenseReportView.ID);
-		report = new ExpenseReport("My Expense Report");
+		
+		/*
+		 * Here, we create a subclass of ExpenseReport that changes the way that
+		 * the EventAdmin service is notified of a change event. See the
+		 * comments on the testTitleFieldUpdate method for more information.
+		 */
+		report = new ExpenseReport("My Expense Report") {
+			@Override
+			protected void postEvent(EventAdmin eventAdmin, Event event) {
+				eventAdmin.sendEvent(event);
+			}
+		};
 		lineItemWithType = new LineItem();
 		lineItemWithType.setType(new ExpenseType("Air fare", 1));
+		lineItemWithType.setAmount(new CurrencyAmount(10.0, Currency.getInstance("CAD")));
+		lineItemWithType.setComment("Comment");
 		report.addLineItem(lineItemWithType);
 		lineItemWithoutType = new LineItem();
 		report.addLineItem(lineItemWithoutType);
@@ -96,12 +114,12 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 
 	@Test
 	public void testThatLabelProviderAnswersCurrency() throws Exception {
-		fail();
+		assertEquals("$10.00", view.labelProvider.getColumnText(lineItemWithType, ExpenseReportView.AMOUNT_COLUMN));
 	}
 
 	@Test
 	public void testThatLabelProviderAnswersComment() throws Exception {
-		fail();
+		assertEquals("Comment", view.labelProvider.getColumnText(lineItemWithType, ExpenseReportView.COMMENT_COLUMN));
 	}
 	
 	@Test
@@ -263,13 +281,63 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 		assertFalse(view.removeButton.isEnabled());
 	}
 	
+	/**
+	 * This test confirms that the {@link ExpenseReportView#titleText} field is
+	 * appropriately updated when the title property changes in the
+	 * {@link ExpenseReport}. Note that this test works with the complete event
+	 * lifecycle: The change in the report queues a change {@link Event} on the
+	 * {@link EventAdmin} service which is picked up by the handler installed in
+	 * the
+	 * {@link ExpenseReportView#startExpenseReportChangedHandlerService(BundleContext)}
+	 * method; That method then effects the update via the
+	 * {@link ExpenseReportView#handleExpenseReportPropertyChangedEvent(Event)}
+	 * method.
+	 * 
+	 * <p>
+	 * By default, the expense report enqueues an event asynchronously. This
+	 * creates a condition that is difficult to test without messing around with
+	 * threads. Since our intent is to test how the ExpenseReportView handles
+	 * updates, and not to test the EventAdmin service ability to deliver events
+	 * asynchronously, the {@link ExpenseReport} under observation has been
+	 * changed to deliver events synchronously (see comments in the
+	 * initialization of the {@link #report} field in the {@link #setup()}
+	 * method.
+	 * 
+	 * <p>
+	 * It could probably be argued that we don't need to involve the EventAdmin
+	 * service at all since it's not what we need to test. We could, for
+	 * example, just invoke the
+	 * {@link ExpenseReportView#handleExpenseReportPropertyChangedEvent(Event)}
+	 * method directly and still have a perfectly valid test.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void testTitleFieldUpdated() throws Exception {
 		report.setTitle("New Title");
-		waitForAPropertyChangeEvent(report, ExpenseReport.TITLE_PROPERTY);
 		
 		processEvents();
 		
 		assertEquals("New Title", view.titleText.getText());
+	}
+	
+	/**
+	 * The {@link EventHandler} registered by in the
+	 * {@link ExpenseReportView#startExpenseReportChangedHandlerService(BundleContext)}
+	 * method will receive update events for changes to all
+	 * {@link ExpenseReport}s. We need to make sure that
+	 * {@link ExpenseReportView#titleText} is only updated when the report under
+	 * observation changes.
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testTitleFieldUpdatedInADifferentInstance() throws Exception {
+		ExpenseReport newReport = new ExpenseReport("Some other Expense Report");
+		newReport.setTitle("New Title");
+		
+		processEvents();
+		
+		assertEquals("My Expense Report", view.titleText.getText());
 	}
 }
