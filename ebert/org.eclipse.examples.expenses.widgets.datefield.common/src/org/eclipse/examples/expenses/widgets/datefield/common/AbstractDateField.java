@@ -16,17 +16,27 @@ import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 
+import com.ibm.icu.util.ULocale;
+
 /**
  * This is an abstract superclass for user interface components that
  * capture a date. This class provides basic information for adding,
  * removing, and notifying listeners of changes to the date. It also
  * provides some basic lifecycle management.
+ * 
+ * <p>
+ * Different subclasses of this class are used in different contexts.
+ * On the RCP, for example, a subclass that leverages the Nebula project's
+ * CDateTime widget provides for a very rich user experience. That
+ * widget does not work on the eRCP platform, so a different subclass
+ * is used there.
  *
  * TODO This class should probably subclass {@link Composite}.
  */
 public abstract class AbstractDateField {
 	Date date;
 	ListenerList dateListeners;
+	ULocale locale;
 
 	public AbstractDateField(Composite parent) {
 	}
@@ -41,6 +51,11 @@ public abstract class AbstractDateField {
 		if (dateListeners == null) dateListeners = new ListenerList();
 		dateListeners.add(listener);
 	}
+	
+	public void removeDateListener(IDateChangeListener listener) {
+		if (dateListeners == null) return;
+		dateListeners.remove(listener);
+	}
 
 	public Date getDate() {
 		return date;
@@ -51,6 +66,14 @@ public abstract class AbstractDateField {
 		setDateAndNotify(date);
 	}
 
+	public ULocale getLocale() {
+		return locale;
+	}
+	
+	public void setLocale(ULocale locale) {
+		this.locale = locale;
+	}
+	
 	/**
 	 * This method sets the contents of the widget based
 	 * on the provided date. This method is invoked in response

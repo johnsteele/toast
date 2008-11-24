@@ -10,9 +10,9 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.widgets.datefield;
 
-import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.Date;
+import java.util.Locale;
 
 import org.eclipse.examples.expenses.widgets.datefield.common.AbstractDateField;
 import org.eclipse.swt.SWT;
@@ -22,10 +22,22 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Text;
 
+import com.ibm.icu.text.DateFormat;
+import com.ibm.icu.util.Calendar;
+import com.ibm.icu.util.ULocale;
+
 /**
- * The SimpleDateField class implements a DateField in the simplest
- * way possible, using an SWT {@link Text} for user input. This
- * implementation works on RCP, RAP, and eRCP. 
+ * The SimpleDateField class implements a DateField in the simplest way
+ * possible, using an SWT {@link Text} for user input. This implementation works
+ * on RCP, RAP, and eRCP.
+ * 
+ * <p>
+ * This class demonstrates how Equinox binds bundles together. With this class'
+ * bundle being installed at runtime, the package dependency resolution process
+ * makes it available to consumers. If an alternative bundle providing a
+ * simliarly named package and class is installed, that package and class will
+ * be resolved and bound instead. For an alternative implementation, see the
+ * org.eclipse.examples.expenses.widgets.datefield.nebula bundle.
  * 
  * @see IDateFieldFactory
  * @see ListItemView#createDateField
@@ -33,10 +45,11 @@ import org.eclipse.swt.widgets.Text;
 public class DateField extends AbstractDateField {
 
 	Text dateText;
-	static DateFormat format = DateFormat.getDateInstance(DateFormat.MEDIUM);
+	DateFormat format;
 	
 	public DateField(final Composite parent) {
 		super(parent);
+		initializeFormat();
 		dateText = new Text(parent, SWT.BORDER);
 		dateText.addModifyListener(new ModifyListener() {
 			public void modifyText(ModifyEvent event) {
@@ -51,6 +64,12 @@ public class DateField extends AbstractDateField {
 		});
 	}
 
+	void initializeFormat() {
+		ULocale locale = getLocale();
+		if (locale == null) locale = ULocale.getDefault();
+		format = DateFormat.getDateInstance(Calendar.getInstance(locale), DateFormat.MEDIUM, locale);
+	}
+
 	protected void clientSetDate(Date date) {		
 		String text = date == null ? "" : format.format(date);
 		if (text.equals(dateText.getText())) return;
@@ -60,5 +79,9 @@ public class DateField extends AbstractDateField {
 	protected Control getControl() {
 		return dateText;
 	}
-
+	
+	public void setLocale(ULocale locale) {
+		super.setLocale(locale);
+		initializeFormat();
+	}
 }

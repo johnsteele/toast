@@ -5,8 +5,10 @@ Bundle-SymbolicName: org.eclipse.examples.expenses.widgets.datefield.basic
 Bundle-Version: 0.0.1.qualifier
 Bundle-RequiredExecutionEnvironment: CDC-1.1/Foundation-1.1,
  OSGi/Minimum-1.1
-Export-Package: org.eclipse.examples.expenses.widgets.datefield
-Import-Package: org.eclipse.examples.expenses.widgets.datefield.common,
+Import-Package: com.ibm.icu.text;version="3.8.1",
+ com.ibm.icu.util;version="3.8.1",
+ org.eclipse.examples.expenses.widgets.datefield.common,
  org.eclipse.swt,
  org.eclipse.swt.events,
  org.eclipse.swt.widgets
+Export-Package: org.eclipse.examples.expenses.widgets.datefield
