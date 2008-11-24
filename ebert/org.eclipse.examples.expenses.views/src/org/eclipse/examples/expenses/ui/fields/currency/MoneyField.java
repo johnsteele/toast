@@ -10,18 +10,12 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.ui.fields.currency;
 
-import java.text.NumberFormat;
 import java.text.ParseException;
-import java.util.ArrayList;
-import java.util.Currency;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
 import org.eclipse.core.runtime.ListenerList;
-import org.eclipse.examples.expenses.core.Money;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
@@ -41,12 +35,17 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Text;
 
+import com.ibm.icu.text.NumberFormat;
+import com.ibm.icu.util.Currency;
+import com.ibm.icu.util.CurrencyAmount;
+import com.ibm.icu.util.ULocale;
+
 public class MoneyField extends Composite {
 	Text amountText;
 	ComboViewer currencyViewer;
-	Money money;
+	CurrencyAmount money;
 	Currency currency;
-	double amount;
+	Number amount;
 	ListenerList valueListeners;
 
 	Currency[] currencies;
@@ -71,7 +70,7 @@ public class MoneyField extends Composite {
 			public void modifyText(ModifyEvent e) {
 				if (ignoreWidgetEvents) return;
 				try {
-					amount = convertAmountTextToDouble();
+					amount = convertAmountTextToNumber(amountText.getText());
 					updateMoneyAndNotify();
 				} catch (ParseException e1) {
 					fireValidationFailureEvent();
@@ -142,6 +141,7 @@ public class MoneyField extends Composite {
 		currencyViewer.setInput(getCurrencies());
 	}
 
+
 	/**
 	 * This method compares the two frequently used {@link Currency} instances
 	 * and returns -1 if they are &quot;in order&quot;, 1 if they are &quot;in
@@ -177,7 +177,7 @@ public class MoneyField extends Composite {
 	boolean isFrequentlyUsedCurrency(Currency currency) {
 		if (frequentlyUsedCurrencies == null) return false;
 		for(int index=0;index<frequentlyUsedCurrencies.length;index++) {
-			if (currency == frequentlyUsedCurrencies[index]) return true;
+			if (currency.equals(frequentlyUsedCurrencies[index])) return true;
 		}
 		return false;
 	}
@@ -200,19 +200,19 @@ public class MoneyField extends Composite {
 	/**
 	 * This method initializes the list of available currencies. This
 	 * list is created from the list of available countries. For each
-	 * country, a {@link Locale} with the country and the language
+	 * country, a {@link ULocale} with the country and the language
 	 * of the user is created. From that local, a {@link Currency}
 	 * is determined. By using the user's language, we avoid the case
-	 * where multiple {@link Locale}s for the same country are created
+	 * where multiple {@link ULocale}s for the same country are created
 	 * (e.g. Canada and Canada French).
 	 */
 	void initialize() {
 		Map currencyToCountryMap = new HashMap();
-		String[] countryCodes = Locale.getISOCountries();
+		String[] countryCodes = ULocale.getISOCountries();
 		// TODO Localize to the user, not the workstation.
-		String language = Locale.getDefault().getLanguage();
+		String language = ULocale.getDefault().getLanguage();
 		for(int index=0;index<countryCodes.length;index++) {
-			Locale locale = new Locale(language, countryCodes[index]);
+			ULocale locale = new ULocale(language, countryCodes[index]);
 			try {
 				Currency currency = Currency.getInstance(locale);
 				if (currency == null) continue;
@@ -237,10 +237,10 @@ public class MoneyField extends Composite {
 	 * 
 	 * @param money
 	 */
-	public void setMoney(Money money) {
+	public void setMoney(CurrencyAmount money) {
 		if (money == this.money) return;
 		this.money = money;
-		amount = money == null ? 0.0 : money.getAmount();
+		amount = money == null ? new Integer(0) : money.getNumber();
 		currency = money == null ? null : money.getCurrency();
 		
 		updateWidgets();
@@ -248,7 +248,7 @@ public class MoneyField extends Composite {
 	}
 
 	void updateMoneyAndNotify() {
-		money = new Money(amount, currency);
+		money = new CurrencyAmount(amount, currency);
 		if (valueListeners == null) return;
 		Object[] listeners = valueListeners.getListeners();
 		if (listeners.length == 0) return;
@@ -270,7 +270,7 @@ public class MoneyField extends Composite {
 				amountText.setText("");
 				currencyViewer.setSelection(StructuredSelection.EMPTY);
 			} else {
-				amountText.setText(getAmountFormat().format(amount));
+				amountText.setText(getCurrencyParser().format(amount));
 				currencyViewer.setSelection(new StructuredSelection(currency), true);
 			}
 		} finally {
@@ -282,6 +282,16 @@ public class MoneyField extends Composite {
 		if (this.currency == currency) return;
 		this.currency = currency;
 		updateWidgets();
+	}
+	
+	NumberFormat getCurrencyParser() {
+		NumberFormat format = NumberFormat.getCurrencyInstance(getUserLocale());
+		if (currency != null) format.setCurrency(currency);
+		return format;
+	}
+
+	NumberFormat getAmountParser() {
+		return NumberFormat.getInstance(getUserLocale());
 	}
 	
 	NumberFormat getAmountFormat() {
@@ -297,12 +307,8 @@ public class MoneyField extends Composite {
 	 * 
 	 * TODO Get the user's locale in RAP.
 	 */
-	Locale getUserLocale() {
-		return Locale.getDefault();
-	}	
-
-	double convertAmountTextToDouble() throws ParseException {
-		return convertAmountTextToNumber(amountText.getText()).doubleValue();		
+	ULocale getUserLocale() {
+		return ULocale.getDefault();
 	}	
 	
 	/**
@@ -321,7 +327,7 @@ public class MoneyField extends Composite {
 		 * First, try to convert using the currency format.
 		 */
 		try {
-			return getAmountFormat().parse(text);
+			return getCurrencyParser().parse(text);
 		} catch (ParseException e) {
 			// Eat
 		}
@@ -331,7 +337,7 @@ public class MoneyField extends Composite {
 		 * number format.
 		 */
 		try {
-			return NumberFormat.getNumberInstance(getUserLocale()).parse(text);
+			return getAmountParser().parse(text);
 		} catch (ParseException e) {
 			// Eat
 		}

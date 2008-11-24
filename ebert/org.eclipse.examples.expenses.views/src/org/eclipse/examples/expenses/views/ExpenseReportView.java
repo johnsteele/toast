@@ -10,8 +10,8 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.views;
 
-import java.text.DateFormat;
 import java.util.Date;
+import java.util.Locale;
 import java.util.Properties;
 
 import org.eclipse.examples.expenses.core.ExpenseReport;
@@ -54,6 +54,11 @@ import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
+
+import com.ibm.icu.text.DateFormat;
+import com.ibm.icu.text.NumberFormat;
+import com.ibm.icu.util.Currency;
+import com.ibm.icu.util.ULocale;
 
 /**
  * This class provides a view that lets the user modify an {@link ExpenseReport}
@@ -151,8 +156,7 @@ public class ExpenseReportView extends AbstractView {
 				if (type == null) return "<specify type>";
 				return type.getTitle();
 			case AMOUNT_COLUMN: 
-				// TODO Need currency formatter
-				return String.valueOf(lineItem.getAmount()); 
+				return getCurrencyFormat().format(lineItem.getAmount());
 			case COMMENT_COLUMN: 
 				return lineItem.getComment();
 			default: return "";
@@ -355,6 +359,10 @@ public class ExpenseReportView extends AbstractView {
 		startEventHandlers();
 
 		updateRemoveButton();
+	}
+
+	protected NumberFormat getCurrencyFormat() {
+		return NumberFormat.getCurrencyInstance(getUserLocale());
 	}
 
 	/**
@@ -607,20 +615,12 @@ public class ExpenseReportView extends AbstractView {
 	void startExpenseReportChangedHandlerService(BundleContext context) {
 		EventHandler handler = new EventHandler() {
 			public void handleEvent(Event event) {
-				if (event.getProperty(ObjectWithProperties.SOURCE) != expenseReport) return;
-				final String property = (String)event.getProperty(ObjectWithProperties.PROPERTY_NAME);
-				if (ExpenseReport.TITLE_PROPERTY.equals(property)) {
-					asyncExec(new Runnable() {
-						public void run() {
-							updateTitleField();
-						}
-					});
-				}				
+				handleExpenseReportPropertyChangedEvent(event);				
 			}			
 		};
 		Properties properties = new Properties();
 		properties.put(EventConstants.EVENT_TOPIC, ObjectWithProperties.PROPERTY_CHANGE_TOPIC);
-		properties.put(EventConstants.EVENT_FILTER, "(" + ObjectWithProperties.SOURCE_TYPE + "=" + LineItem.class.getName() +")");
+		properties.put(EventConstants.EVENT_FILTER, "(" + ExpenseReport.class.getName() +"=true)");
 		
 		expenseReportChangedEventHandlerService = context.registerService(EventHandler.class.getName(), handler, properties);
 	}
@@ -723,5 +723,32 @@ public class ExpenseReportView extends AbstractView {
 	void updateLineItemsTable() {
 		lineItemTableViewer.setInput(expenseReport);
 		lineItemTableViewer.getTable().setEnabled(expenseReport != null);
+	}
+
+	/**
+	 * This method handles property change events reported by any instance of
+	 * {@link ExpenseReport}. For our purposes, we only care about changes made
+	 * to the {@link #expenseReport} under observation (events generated for any
+	 * other instance are discarded). For now, the only simple property for an
+	 * ExpenseReport that we display is the title; if the title property
+	 * changes, we update the {@link #titleText} field to reflect the change.
+	 * 
+	 * <p>
+	 * This method can be run from any thread.
+	 * 
+	 * @param event
+	 *            an instance of {@link Event} detailing the property change.
+	 */
+	void handleExpenseReportPropertyChangedEvent(Event event) {
+		if (event.getProperty(ObjectWithProperties.SOURCE) != expenseReport) return;
+		
+		final String property = (String)event.getProperty(ObjectWithProperties.PROPERTY_NAME);
+		if (ExpenseReport.TITLE_PROPERTY.equals(property)) {
+			asyncExec(new Runnable() {
+				public void run() {
+					updateTitleField();
+				}
+			});
+		}
 	}
 }

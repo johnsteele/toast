@@ -1,18 +1,17 @@
 package org.eclipse.examples.expenses.core;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
-import static org.junit.Assert.assertTrue;
 
-import java.util.Currency;
 import java.util.Date;
-import java.util.List;
-import java.util.Locale;
 
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.junit.Test;
 import org.osgi.service.event.Event;
+
+import com.ibm.icu.util.Currency;
+import com.ibm.icu.util.CurrencyAmount;
+import com.ibm.icu.util.ULocale;
 
 /**
  * This class provides a handful of tests for the {@link LineItem} class.
@@ -31,7 +30,7 @@ public class LineItemTests extends ObjectWithPropertiesTests {
 	
 	@Test
 	public void testSetAmount() throws Exception {
-		Money amount = new Money(1000, Currency.getInstance(Locale.CANADA));
+		CurrencyAmount amount = new CurrencyAmount(1000.0, Currency.getInstance(ULocale.CANADA));
 		lineItem.setAmount(amount);
 		
 		PropertyChangeEvent propertyChangeEvent = observerQueue.remove();

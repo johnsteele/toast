@@ -12,19 +12,19 @@ package org.eclipse.examples.expenses.ui.fields.currency;
 
 import java.util.EventObject;
 
-import org.eclipse.examples.expenses.core.Money;
+import com.ibm.icu.util.CurrencyAmount;
 
 public class MoneyChangeEvent extends EventObject {
 	private static final long serialVersionUID = -7815430026338867768L;
 	
-	private final Money newValue;
+	private final CurrencyAmount newValue;
 
-	public MoneyChangeEvent(Object source, Money newValue) {
+	public MoneyChangeEvent(Object source, CurrencyAmount money) {
 		super(source);
-		this.newValue = newValue;
+		this.newValue = money;
 	}
 
-	public Money getNewValue() {
+	public CurrencyAmount getNewValue() {
 		return newValue;
 	}
 }

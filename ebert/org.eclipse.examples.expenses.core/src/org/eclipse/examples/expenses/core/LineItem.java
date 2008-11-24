@@ -12,10 +12,13 @@ package org.eclipse.examples.expenses.core;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.Locale;
+
+import com.ibm.icu.util.Currency;
+import com.ibm.icu.util.CurrencyAmount;
 
 public class LineItem extends ObjectWithProperties implements Serializable {
 	public static final String DATE_PROPERTY = "date";
@@ -28,7 +31,7 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 		
 	Date date;
 	ExpenseType type;
-	Money amount = Money.ZERO;
+	CurrencyAmount amount = new CurrencyAmount(new Integer(0), Currency.getInstance(Locale.CANADA));
 	String comment;
 	double exchangeRate = 0.0;
 
@@ -71,13 +74,13 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 		return type;
 	}
 
-	public void setAmount(Money amount) {
-		Money oldValue = this.amount;
+	public void setAmount(CurrencyAmount amount) {
+		CurrencyAmount oldValue = this.amount;
 		this.amount = amount;
 		firePropertyChanged(AMOUNT_PROPERTY, oldValue, amount);
 	}
 
-	public Money getAmount() {
+	public CurrencyAmount getAmount() {
 		return amount;
 	}
 
@@ -104,7 +107,7 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 		} else {
 			type = ExpensesBinder.getTypes()[ordinality];
 		}
-		amount = (Money) stream.readObject();
+		amount = (CurrencyAmount) stream.readObject();
 		exchangeRate = stream.readDouble();
 		comment = (String) stream.readObject();
 	}
