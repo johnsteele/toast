@@ -87,7 +87,7 @@ public class ViewCustomizer implements IViewCustomizer {
 		commentColumn.setEditingSupport(new EditingSupport(viewer) {
 			@Override
 			protected boolean canEdit(Object element) {
-				return false;
+				return true;
 			}
 
 			@Override
