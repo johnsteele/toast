@@ -10,9 +10,20 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.views;
 
-import java.text.NumberFormat;
+import java.io.WriteAbortedException;
 import java.text.ParseException;
+import java.util.Date;
 
+import org.eclipse.core.databinding.Binding;
+import org.eclipse.core.databinding.DataBindingContext;
+import org.eclipse.core.databinding.beans.BeansObservables;
+import org.eclipse.core.databinding.beans.PojoObservables;
+import org.eclipse.core.databinding.observable.Diffs;
+import org.eclipse.core.databinding.observable.IObservable;
+import org.eclipse.core.databinding.observable.Realm;
+import org.eclipse.core.databinding.observable.value.AbstractObservableValue;
+import org.eclipse.core.databinding.observable.value.IObservableValue;
+import org.eclipse.core.databinding.observable.value.WritableValue;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
@@ -22,6 +33,11 @@ import org.eclipse.examples.expenses.ui.fields.currency.MoneyField;
 import org.eclipse.examples.expenses.widgets.datefield.DateField;
 import org.eclipse.examples.expenses.widgets.datefield.common.DateChangeEvent;
 import org.eclipse.examples.expenses.widgets.datefield.common.IDateChangeListener;
+import org.eclipse.jface.databinding.swt.ISWTObservable;
+import org.eclipse.jface.databinding.swt.ISWTObservableValue;
+import org.eclipse.jface.databinding.swt.SWTObservables;
+import org.eclipse.jface.databinding.viewers.IViewerObservableValue;
+import org.eclipse.jface.databinding.viewers.ViewersObservables;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ComboViewer;
@@ -47,6 +63,8 @@ import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISelectionService;
 import org.eclipse.ui.IWorkbenchPart;
 
+import com.ibm.icu.text.NumberFormat;
+
 public class LineItemView extends AbstractView {
 
 	/**
@@ -55,8 +73,8 @@ public class LineItemView extends AbstractView {
 	 */
 	public static final String ID = LineItemView.class.getName();
 	
-	LineItem lineItem;
-	
+	IObservableValue lineItem = new WritableValue();
+		
 	DateField dateField;
 
 	ComboViewer typeDropdown;
@@ -66,11 +84,6 @@ public class LineItemView extends AbstractView {
 	Text commentText;	
 
 	Text exchangeRateText;
-
-	/**
-	 * This colour is used to indicate an error on a field.
-	 */
-	private Color error;
 
 	ISelectionListener selectionListener = new ISelectionListener() {
 		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
@@ -83,14 +96,15 @@ public class LineItemView extends AbstractView {
 			update();
 		}			
 	};
+
+	private DataBindingContext bindingContext;
 	
 	public void createPartControl(Composite parent) {
 		parent.setLayout(new GridLayout(2, false));
-		
-		allocateResources(parent.getDisplay());
-		
+
+		bindingContext = new DataBindingContext();
 		createDateLabel(parent);
-		createDateField(parent);
+		createDateField(parent, bindingContext);
 
 		createTypeLabel(parent);
 		createTypeField(parent);
@@ -118,7 +132,7 @@ public class LineItemView extends AbstractView {
 
 
 	public void dispose() {
-		unhookListeners(lineItem);
+		bindingContext.dispose();
 		unhookSelectionListener();
 	}
 	
@@ -134,13 +148,39 @@ public class LineItemView extends AbstractView {
 		selectionService.addSelectionListener(selectionListener);
 	}
 	
-	void allocateResources(Display display) {
-		error = display.getSystemColor(SWT.COLOR_RED);
-	}
-
 	protected void createDateLabel(Composite parent) {
 		Label dateLabel = new Label(parent, SWT.NONE);
 		dateLabel.setText("Date:");			
+	}
+	
+	class DateFieldObserverableValue extends AbstractObservableValue {
+		IDateChangeListener listener = new IDateChangeListener() {
+			public void dateChange(DateChangeEvent event) {
+				fireValueChange(Diffs.createValueDiff(event.getOldValue(), event.getNewValue()));
+			}				
+		};
+		private final DateField field;
+		
+		public DateFieldObserverableValue(DateField field) {
+			this.field = field;
+			field.addDateListener(listener);
+		}
+		
+		public synchronized void dispose() {
+			field.removeDateListener(listener);
+		}
+		
+		protected Object doGetValue() {
+			return dateField.getDate();
+		}
+
+		public Object getValueType() {
+			return Date.class;
+		}
+
+		protected void doSetValue(Object value) {
+			dateField.setDate((Date)value);
+		}
 	}
 	
 	/**
@@ -162,17 +202,24 @@ public class LineItemView extends AbstractView {
 	 * one of them should be available.
 	 * 
 	 * TODO Comment contains references to datefield bundles. Keep up-to-date.
+	 * @param bindingContext 
 	 */
-	protected void createDateField(Composite parent) {
+	protected void createDateField(Composite parent, DataBindingContext bindingContext) {
 		dateField = new DateField(parent);
 
 		dateField.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		dateField.addDateListener(new IDateChangeListener() {
-			public void dateChange(DateChangeEvent event) {
-				if (lineItem == null) return;
-				lineItem.setDate(event.getNewValue());
-			}					
-		});
+		
+		IObservableValue dateFieldObservable = new DateFieldObserverableValue(dateField);
+		IObservableValue datePropertyObservable = PojoObservables.observeDetailValue(Realm.getDefault(), lineItem, LineItem.DATE_PROPERTY, Date.class);
+		bindingContext.bindValue(dateFieldObservable, datePropertyObservable, null, null);
+
+		
+//		dateField.addDateListener(new IDateChangeListener() {
+//			public void dateChange(DateChangeEvent event) {
+//				if (lineItem == null) return;
+//				lineItem.setDate(event.getNewValue());
+//			}					
+//		});
 	}
 
 	private void createTypeLabel(Composite parent) {
@@ -200,14 +247,18 @@ public class LineItemView extends AbstractView {
 			}
 		});
 		typeDropdown.setInput(ExpensesBinder.getTypes());
-		typeDropdown.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {
-				if (lineItem == null) return;
-				IStructuredSelection selection = (IStructuredSelection)event.getSelection();
-				if (selection == null) return;
-				lineItem.setType((ExpenseType)selection.getFirstElement());
-			}			
-		});
+		
+		IObservableValue typeDropDownObservable = ViewersObservables.observeSingleSelection(typeDropdown);
+		IObservableValue typePropertyObservable = PojoObservables.observeDetailValue(Realm.getDefault(), lineItem, LineItem.TYPE_PROPERTY, ExpenseType.class);
+		bindingContext.bindValue(typeDropDownObservable, typePropertyObservable, null, null);
+//		typeDropdown.addSelectionChangedListener(new ISelectionChangedListener() {
+//			public void selectionChanged(SelectionChangedEvent event) {
+//				if (lineItem == null) return;
+//				IStructuredSelection selection = (IStructuredSelection)event.getSelection();
+//				if (selection == null) return;
+//				lineItem.setType((ExpenseType)selection.getFirstElement());
+//			}			
+//		});
 	}
 
 	protected void createAmountLabel(Composite parent) {
@@ -219,12 +270,12 @@ public class LineItemView extends AbstractView {
 		amountField = new MoneyField(parent, SWT.NONE);
 		amountField.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		
-		amountField.addMoneyChangeListener(new IMoneyChangeListener() {
-			public void moneyChange(MoneyChangeEvent event) {
-				if (lineItem == null) return;
-				lineItem.setAmount(event.getNewValue());
-			}			
-		});
+//		amountField.addMoneyChangeListener(new IMoneyChangeListener() {
+//			public void moneyChange(MoneyChangeEvent event) {
+//				if (lineItem == null) return;
+//				lineItem.setAmount(event.getNewValue());
+//			}			
+//		});
 	}
 
 	private void createExchangeRateLabel(Composite parent) {
@@ -234,19 +285,22 @@ public class LineItemView extends AbstractView {
 	
 	protected void createExchangeRateField(Composite parent) {
 		exchangeRateText = new Text(parent, SWT.BORDER);
-		exchangeRateText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		exchangeRateText.addModifyListener(new ModifyListener() {
-			private NumberFormat exchangeRateFormat = NumberFormat.getInstance();
+		exchangeRateText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));		
+		
+		IObservableValue exchangeRateTextObservable = SWTObservables.observeText(exchangeRateText, SWT.Modify);
+		IObservableValue exchangeRatePropertyObservable = PojoObservables.observeDetailValue(Realm.getDefault(), lineItem, LineItem.EXCHANGE_RATE_PROPERTY, double.class);
+		bindingContext.bindValue(exchangeRateTextObservable, exchangeRatePropertyObservable, null, null);
 
-			public void modifyText(ModifyEvent event) {
-				if (lineItem == null) return;
-				try {					
-					lineItem.setExchangeRate(exchangeRateFormat.parse(exchangeRateText.getText()).doubleValue());
-				} catch (ParseException e) {
-					// Eat exception
-				}
-			}			
-		});
+//		exchangeRateText.addModifyListener(new ModifyListener() {
+//			public void modifyText(ModifyEvent event) {
+//				if (lineItem == null) return;
+//				try {					
+//					lineItem.setExchangeRate(getExchangeRateFormat().parse(exchangeRateText.getText()).doubleValue());
+//				} catch (ParseException e) {
+//					// Eat exception
+//				}
+//			}			
+//		});
 	}
 	
 	private void createCommentLabel(Composite parent) {
@@ -257,42 +311,55 @@ public class LineItemView extends AbstractView {
 	protected void createCommentField(Composite parent) {
 		commentText = new Text(parent, SWT.MULTI | SWT.BORDER);
 		commentText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		commentText.addModifyListener(new ModifyListener() {
-			public void modifyText(ModifyEvent event) {
-				if (lineItem == null) return;
-				lineItem.setComment(commentText.getText());
-			}			
-		});
+		
+		IObservableValue commentTextObservable = SWTObservables.observeText(commentText, SWT.Modify);
+		IObservableValue commentPropertyObservable = PojoObservables.observeDetailValue(Realm.getDefault(), lineItem, LineItem.COMMENT_PROPERTY, String.class);
+		bindingContext.bindValue(commentTextObservable, commentPropertyObservable, null, null);
+
+//		commentText.addModifyListener(new ModifyListener() {
+//			public void modifyText(ModifyEvent event) {
+//				if (lineItem == null) return;
+//				lineItem.setComment(commentText.getText());
+//			}			
+//		});
 	}
 	
 	void update() {
-		if (lineItem == null) {
-			dateField.setEnabled(false);
-			dateField.setDate(null);
-			
-			typeDropdown.getCombo().setEnabled(false);
-			typeDropdown.setSelection(null);
-			
-			amountField.setEnabled(false);
-			amountField.setMoney(null);
-			
-			commentText.setEnabled(false);
-			commentText.setText("");
-		} else {
-			dateField.setEnabled(true);
-			dateField.setDate(lineItem.getDate());
-			
-			typeDropdown.getCombo().setEnabled(true);
-			typeDropdown.setSelection(lineItem.getType() == null ? StructuredSelection.EMPTY : new StructuredSelection(lineItem.getType()));
-			
-			amountField.setEnabled(true);
-			amountField.setMoney(lineItem.getAmount());
-			
-			commentText.setEnabled(true);
-			commentText.setText(lineItem.getComment() == null ? "" : lineItem.getComment());	
-		}
+//		if (lineItem == null) {
+//			dateField.setEnabled(false);
+//			dateField.setDate(null);
+//			
+//			typeDropdown.getCombo().setEnabled(false);
+//			typeDropdown.setSelection(null);
+//			
+//			amountField.setEnabled(false);
+//			amountField.setMoney(null);
+//			
+//			commentText.setEnabled(false);
+//			commentText.setText("");
+//		} else {
+//			dateField.setEnabled(true);
+//			dateField.setDate(lineItem.getDate());
+//			
+//			typeDropdown.getCombo().setEnabled(true);
+//			typeDropdown.setSelection(lineItem.getType() == null ? StructuredSelection.EMPTY : new StructuredSelection(lineItem.getType()));
+//			
+//			amountField.setEnabled(true);
+//			amountField.setMoney(lineItem.getAmount());
+//			
+//			exchangeRateText.setEnabled(true);
+//			exchangeRateText.setText(getExchangeRateFormat().format(lineItem.getExchangeRate()));
+//			
+//			commentText.setEnabled(true);
+//			commentText.setText(lineItem.getComment() == null ? "" : lineItem.getComment());	
+//		}
 	}
 	
+	NumberFormat getExchangeRateFormat() {
+		return NumberFormat.getInstance(getUserLocale());
+	}
+
+
 	public void setFocus() {
 		dateField.setFocus();
 	}
@@ -320,20 +387,21 @@ public class LineItemView extends AbstractView {
 	}
 
 	public void setLineItem(LineItem lineItem) {
-		unhookListeners(this.lineItem);
-		hookListeners(lineItem);
-		this.lineItem = lineItem;
-		update();
+		this.lineItem.setValue(lineItem);
+//		unhookListeners(this.lineItem);
+//		hookListeners(lineItem);
+//		this.lineItem = lineItem;
+//		update();
 	}
 
 
-	void hookListeners(LineItem lineItem) {
-		if (lineItem == null) return;
-		lineItem.addPropertyChangeListener(propertyChangeListener);
-	}
-	
-	void unhookListeners(LineItem lineItem) {
-		if (lineItem == null) return;
-		lineItem.removePropertyChangeListener(propertyChangeListener);
-	}
+//	void hookListeners(LineItem lineItem) {
+//		if (lineItem == null) return;
+//		lineItem.addPropertyChangeListener(propertyChangeListener);
+//	}
+//	
+//	void unhookListeners(LineItem lineItem) {
+//		if (lineItem == null) return;
+//		lineItem.removePropertyChangeListener(propertyChangeListener);
+//	}
 }

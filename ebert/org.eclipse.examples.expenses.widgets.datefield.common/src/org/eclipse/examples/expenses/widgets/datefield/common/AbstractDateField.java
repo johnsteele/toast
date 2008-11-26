@@ -87,12 +87,14 @@ public abstract class AbstractDateField {
 	protected void setDateAndNotify(Date date) {
 		if (date == null && this.date == null) return;
 		if (date != null && date.equals(this.date)) return;
+		
+		Date oldValue = this.date;
 		this.date = date;
 		
 		if (dateListeners == null) return;
 		Object[] listeners = dateListeners.getListeners();
 		if (listeners.length == 0) return;
-		DateChangeEvent event = new DateChangeEvent(this, date);
+		DateChangeEvent event = new DateChangeEvent(this, oldValue, date);
 		for (int index=0;index<listeners.length;index++) {
 			((IDateChangeListener)listeners[index]).dateChange(event);
 		}

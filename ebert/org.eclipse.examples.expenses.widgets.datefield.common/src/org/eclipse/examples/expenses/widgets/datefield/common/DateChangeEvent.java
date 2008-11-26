@@ -15,15 +15,21 @@ import java.util.EventObject;
 
 public class DateChangeEvent extends EventObject {
 	private static final long serialVersionUID = 3360451196508645054L;
-	
+
+	private final Date oldValue;
 	private final Date newValue;
 
-	public DateChangeEvent(Object source, Date newValue) {
+	public DateChangeEvent(Object source, Date oldValue, Date newValue) {
 		super(source);
+		this.oldValue = oldValue;
 		this.newValue = newValue;
 	}
 
 	public Date getNewValue() {
 		return newValue;
+	}
+
+	public Date getOldValue() {
+		return oldValue;
 	}
 }

@@ -24,7 +24,7 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 	public static final String DATE_PROPERTY = "date";
 	public static final String TYPE_PROPERTY = "type";
 	public static final String AMOUNT_PROPERTY = "amount";
-	private static final String EXCHANGE_RATE_PROPERTY = "exchangeRate";
+	public static final String EXCHANGE_RATE_PROPERTY = "exchangeRate";
 	public static final String COMMENT_PROPERTY = "comment";
 	public static final String[] PROPERTIES = new String[] {
 		DATE_PROPERTY, TYPE_PROPERTY, AMOUNT_PROPERTY, EXCHANGE_RATE_PROPERTY, COMMENT_PROPERTY};
@@ -90,6 +90,10 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 		this.exchangeRate = exchangeRate;
 		firePropertyChanged(EXCHANGE_RATE_PROPERTY, new Double(oldValue), new Double(exchangeRate));
 	} 
+
+	public double getExchangeRate() {
+		return exchangeRate;
+	}
 	
 	private void writeObject(java.io.ObjectOutputStream stream) throws IOException {
 		stream.writeObject(date);
@@ -111,5 +115,4 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 		exchangeRate = stream.readDouble();
 		comment = (String) stream.readObject();
 	}
-
 }
