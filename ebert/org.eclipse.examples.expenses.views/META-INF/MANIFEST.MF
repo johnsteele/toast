@@ -28,6 +28,7 @@ Import-Package: com.ibm.icu.text;version="3.8.1",
  org.eclipse.jface.action,
  org.eclipse.jface.databinding.swt,
  org.eclipse.jface.databinding.viewers,
+ org.eclipse.jface.internal.databinding.provisional.swt,
  org.eclipse.jface.util,
  org.eclipse.jface.viewers,
  org.eclipse.swt,
@@ -44,3 +45,4 @@ Bundle-Activator: org.eclipse.examples.expenses.ui.ExpenseReportingUI
 Eclipse-LazyStart: true
 Bundle-RequiredExecutionEnvironment: CDC-1.1/Foundation-1.1,
  OSGi/Minimum-1.1
+Require-Bundle: org.eclipse.core.databinding

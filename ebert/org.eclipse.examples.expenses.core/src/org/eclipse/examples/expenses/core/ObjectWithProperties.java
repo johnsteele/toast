@@ -114,8 +114,7 @@ public abstract class ObjectWithProperties implements Serializable {
 	 * @param newValue
 	 *            The new value of the property.
 	 */
-	protected void firePropertyChanged(String propertyName, Object oldValue,
-			Object newValue) {
+	protected void firePropertyChanged(String propertyName, Object oldValue, Object newValue) {
 		if (oldValue == null && newValue == null)
 			return;
 		if (oldValue != null && oldValue.equals(newValue))

@@ -247,12 +247,17 @@ public class MoneyField extends Composite {
 		updateMoneyAndNotify();
 	}
 
+	public CurrencyAmount getMoney() {
+		return money;
+	}
+	
 	void updateMoneyAndNotify() {
+		CurrencyAmount oldMoney = money;
 		money = new CurrencyAmount(amount, currency);
 		if (valueListeners == null) return;
 		Object[] listeners = valueListeners.getListeners();
 		if (listeners.length == 0) return;
-		MoneyChangeEvent event = new MoneyChangeEvent(this, money);
+		MoneyChangeEvent event = new MoneyChangeEvent(this, oldMoney, money);
 		for(int index=0;index<listeners.length;index++) {
 			((IMoneyChangeListener)listeners[index]).moneyChange(event);
 		}
