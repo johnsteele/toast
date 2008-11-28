@@ -16,9 +16,13 @@ import java.util.Properties;
 
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
+import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.core.ObjectWithProperties;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
+import org.eclipse.examples.expenses.ui.ExpenseReportingUIModelAdapter;
+import org.eclipse.examples.expenses.ui.IExpenseReportingUIModel;
+import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ISelection;
@@ -194,18 +198,6 @@ public class ExpenseReportView extends AbstractView {
 	};
 		
 	/**
-	 * This field contains the listener that is installed on the workbench's
-	 * selection service. 
-	 * 
-	 * @see IWorkbenchWindow#getSelectionService()
-	 */
-	ISelectionListener selectionListener = new ISelectionListener() {
-		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-			handleSelection(selection);
-		}	
-	};
-
-	/**
 	 * This {@link DateFormat} instance is used to format dates displayed in the
 	 * table.
 	 * 
@@ -341,6 +333,13 @@ public class ExpenseReportView extends AbstractView {
 	private Button addButton;
 	private Composite titleArea;
 			
+
+	ExpenseReportingUIModelAdapter expenseReportingUIModelListener = new ExpenseReportingUIModelAdapter() {
+		public void reportChanged(ExpenseReport report) {
+			setReport(report);
+		}
+	};
+	
 	/**
 	 * This is where it all happens. This method is called to actually create
 	 * the view. As part of the creation process, user interface component
@@ -354,11 +353,21 @@ public class ExpenseReportView extends AbstractView {
 		createButtons(parent);	
 				
 		customizeView(parent);
+
+		/*
+		 * Add a listener to the UI Model; should the binder change, we'll update
+		 * ourselves to reflect that change.
+		 */
+		getExpenseReportingUIModel().addListener(expenseReportingUIModelListener);
+		setReport(getExpenseReportingUIModel().getReport());
 		
-		hookSelectionListener();		
 		startEventHandlers();
 
 		updateRemoveButton();
+	}
+
+	private IExpenseReportingUIModel getExpenseReportingUIModel() {
+		return ExpenseReportingUI.getDefault().getExpenseReportingUIModel();
 	}
 
 	protected NumberFormat getCurrencyFormat() {
@@ -417,6 +426,13 @@ public class ExpenseReportView extends AbstractView {
 		lineItemTableViewer.setLabelProvider(labelProvider);
 		lineItemTableViewer.setSorter(dateSorter);
 	
+		lineItemTableViewer.addSelectionChangedListener(new ISelectionChangedListener() {
+			public void selectionChanged(SelectionChangedEvent event) {
+				IStructuredSelection selection = (IStructuredSelection)event.getSelection();
+				getExpenseReportingUIModel().setLineItem((LineItem) selection.getFirstElement());
+			}			
+		});
+		
 		getSite().setSelectionProvider(lineItemTableViewer);
 		
 		lineItemTableViewer.getTable().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -631,20 +647,9 @@ public class ExpenseReportView extends AbstractView {
 		lineItemChangedHandlerService.unregister();
 		expenseReportChangedEventHandlerService.unregister();
 		
-		unhookSelectionListener();
+		getExpenseReportingUIModel().removeListener(expenseReportingUIModelListener);
+		
 		super.dispose();
-	}
-
-	void hookSelectionListener() {
-		ISelectionService selectionService = getSite().getWorkbenchWindow().getSelectionService();
-		if (selectionService == null) return;
-		selectionService.addSelectionListener(selectionListener);
-	}
-	
-	void unhookSelectionListener() {
-		ISelectionService selectionService = getSite().getWorkbenchWindow().getSelectionService();
-		if (selectionService == null) return;
-		selectionService.removeSelectionListener(selectionListener);
 	}
 
 	void updateRemoveButton() {
@@ -659,19 +664,6 @@ public class ExpenseReportView extends AbstractView {
 		return !((IStructuredSelection)lineItemTableViewer.getSelection()).isEmpty();
 	}
 
-	protected void handleSelection(ISelection selection) {
-		if (selection instanceof IStructuredSelection) {
-			handleSelection((IStructuredSelection)selection);
-		}
-	}
-
-	private void handleSelection(IStructuredSelection selection) {
-		Object object = selection.getFirstElement();
-		if (object instanceof ExpenseReport) {
-			setReport((ExpenseReport)object);
-		}
-	}	
-	
 	/**
 	 * This method sets the instance of {@link ExpenseReport} being viewed
 	 * by the receiver. Note that this method can be called by any thread

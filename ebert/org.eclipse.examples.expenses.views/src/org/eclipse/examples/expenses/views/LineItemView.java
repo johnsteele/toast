@@ -22,6 +22,9 @@ import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.core.ObjectWithProperties;
+import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
+import org.eclipse.examples.expenses.ui.ExpenseReportingUIModelAdapter;
+import org.eclipse.examples.expenses.ui.IExpenseReportingUIModel;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyField;
 import org.eclipse.examples.expenses.views.databinding.DateFieldObserverableValue;
 import org.eclipse.examples.expenses.views.databinding.MoneyFieldObserverableValue;
@@ -31,6 +34,7 @@ import org.eclipse.examples.expenses.widgets.datefield.DateField;
 import org.eclipse.jface.databinding.swt.SWTObservables;
 import org.eclipse.jface.databinding.viewers.ViewersObservables;
 import org.eclipse.jface.internal.databinding.provisional.swt.ControlUpdater;
+import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
@@ -43,12 +47,43 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.ISelectionService;
-import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.part.ViewPart;
 
 import com.ibm.icu.util.CurrencyAmount;
 
+/**
+ * This {@link ViewPart} provides a view onto a single instance of the
+ * {@link LineItem} class.
+ * <p>
+ * Two custom widgets are used by this part: the {@link MoneyField} widget
+ * displays and creates instances of {@link CurrencyAmount}; the
+ * {@link DateField} widget displays and selects instances of {@link Date}.
+ * <p>
+ * The implementation uses the JFace DataBinding APIs to provide a two-way
+ * binding between the domain model and the user interface components. In order
+ * to leverage JFace DataBinding, some custom code is required to make
+ * connections with the custom widgets used. There is no built in support for
+ * the {@link MoneyField} custom widget, for example, so the
+ * {@link MoneyFieldObserverableValue} class was created to provide this
+ * support. For similar reasons, the {@link DateFieldObserverableValue} class
+ * was created. The other fields use standard mechanisms to provide the binding.
+ * <p>
+ * JFace DataBinding provides built-in support for JavaBeans. Unfortunately, our
+ * domain model is not built using standard JavaBeans owing to the fact that
+ * JavaBeans are not included as part of the Foundation 1.1 libraries we conform
+ * to in order to support environments like eRCP. Our implementation instead
+ * provides custom listeners using {@link IPropertyChangeListener} interface.
+ * The {@link ObjectWithPropertiesObservableValue} class was created to
+ * accomodate these &quot;custom JavaBeans&quot;.
+ * 
+ * @see ViewPart
+ * @see ObjectWithPropertiesObservableValue
+ * @see DateFieldObserverableValue
+ * @see MoneyFieldObserverableValue
+ * 
+ * @author wayne
+ * 
+ */
 public class LineItemView extends AbstractView {
 
 	/**
@@ -122,14 +157,14 @@ public class LineItemView extends AbstractView {
 	 */
 	Text exchangeRateText;
 
-	ISelectionListener selectionListener = new ISelectionListener() {
-		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-			handleSelection(selection);
-		}	
+	private DataBindingContext bindingContext;
+
+	ExpenseReportingUIModelAdapter expenseReportingUIModelListener = new ExpenseReportingUIModelAdapter() {
+		public void lineItemChanged(LineItem lineItem) {
+			setLineItem(lineItem);
+		}
 	};
 
-	private DataBindingContext bindingContext;
-	
 	public void createPartControl(final Composite parent) {
 		parent.setLayout(new GridLayout(2, false));
 
@@ -154,10 +189,15 @@ public class LineItemView extends AbstractView {
 		layoutData.horizontalSpan = 2;
 		buttons.setLayoutData(layoutData);
 				
-		hookSelectionListener();
-		
 		customizeView(parent);		
 
+		/*
+		 * Add a listener to the UI Model; should the binder change, we'll update
+		 * ourselves to reflect that change.
+		 */
+		getExpenseReportingUIModel().addListener(expenseReportingUIModelListener);
+		setLineItem(getExpenseReportingUIModel().getLineItem());
+		
 		/*
 		 * ControlUpdaters is provisional API. This means that--strictly speaking--it
 		 * is not currently part of the API and use of this class is--strictly speaking--a
@@ -172,21 +212,12 @@ public class LineItemView extends AbstractView {
 		};
 	}
 
-	public void dispose() {
-		bindingContext.dispose();
-		unhookSelectionListener();
-	}
-	
-	void unhookSelectionListener() {
-		ISelectionService selectionService = getSite().getWorkbenchWindow().getSelectionService();
-		if (selectionService == null) return;
-		selectionService.removeSelectionListener(selectionListener);
+	private IExpenseReportingUIModel getExpenseReportingUIModel() {
+		return ExpenseReportingUI.getDefault().getExpenseReportingUIModel();
 	}
 
-	void hookSelectionListener() {
-		ISelectionService selectionService = getSite().getWorkbenchWindow().getSelectionService();
-		if (selectionService == null) return;
-		selectionService.addSelectionListener(selectionListener);
+	public void dispose() {
+		bindingContext.dispose();
 	}
 	
 	protected void createDateLabel(Composite parent) {

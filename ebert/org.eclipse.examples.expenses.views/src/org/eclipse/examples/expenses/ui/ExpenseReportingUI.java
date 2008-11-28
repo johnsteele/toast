@@ -16,6 +16,7 @@ import org.osgi.framework.BundleContext;
 public class ExpenseReportingUI implements BundleActivator {
 	static ExpenseReportingUI instance;
 	private BundleContext context;
+	private IExpenseReportingUIModel expenseReportingUIModel;
 
 	public ExpenseReportingUI() {
 		instance = this;
@@ -27,13 +28,20 @@ public class ExpenseReportingUI implements BundleActivator {
 	
 	public void start(BundleContext context) throws Exception {
 		this.context = context;
-	}
-	
-	public void stop(BundleContext context) throws Exception {
-		context = null;
+		expenseReportingUIModel = new ExpenseReportingUIModelProxy(context);
 	}
 
+	public void stop(BundleContext context) throws Exception {
+		expenseReportingUIModel.dispose();
+		expenseReportingUIModel = null;
+		context = null;
+	}
+	
 	public BundleContext getContext() {
 		return context;
+	}
+
+	public IExpenseReportingUIModel getExpenseReportingUIModel() {
+		return expenseReportingUIModel;
 	}
 }

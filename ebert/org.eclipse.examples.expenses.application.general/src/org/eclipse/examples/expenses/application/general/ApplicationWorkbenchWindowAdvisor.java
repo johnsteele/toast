@@ -11,9 +11,8 @@
 package org.eclipse.examples.expenses.application.general;
 
 import org.eclipse.examples.expenses.core.ExpensesBinder;
-import org.eclipse.examples.expenses.views.BinderView;
+import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
 import org.eclipse.swt.graphics.Point;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
 import org.eclipse.ui.application.IWorkbenchWindowConfigurer;
@@ -44,18 +43,7 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
     }
 	
 	public void postWindowCreate() {
-		try {
-			/*
-			 * Obtain a handle on the BinderView and explicitly set an
-			 * instance of BinderView into it. This way, the views themselves
-			 * will manage the application state.
-			 */
-			BinderView view = (BinderView) getWindowConfigurer().getWindow().getActivePage().showView(BinderView.ID);
-			ExpensesBinder binder = applicationStateManager.getBinder();
-			view.setBinder(binder);
-		} catch (PartInitException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		ExpensesBinder binder = applicationStateManager.getBinder();
+		ExpenseReportingUI.getDefault().getExpenseReportingUIModel().setBinder(binder);
 	}
 }

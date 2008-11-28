@@ -129,29 +129,7 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 		assertTrue(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.TYPE_PROPERTY));
 		assertTrue(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.COMMENT_PROPERTY));
 	}
-	
-	/**
-	 * We assume at this point that the workbench's selection service works
-	 * as designed/documented. We're not testing that particular feature here.
-	 * What we are testing is that our code that responds to the workbench
-	 * selection service does what it's supposed to.
-	 */
-	@Test
-	public void testWorkbenchSelectionOfExpenseReport() throws Exception {
-		ExpenseReport newReport = new ExpenseReport("New Expense Report");
-		LineItem newLineItem = new LineItem();
-		newReport.addLineItem(newLineItem);
 		
-		view.selectionListener.selectionChanged(null, new StructuredSelection(newReport));
-		
-		processEvents();
-		
-		assertSame(newReport, view.expenseReport);
-		assertEquals("New Expense Report", view.titleText.getText());
-		assertTrue(view.lineItemTableViewer.getTable().isEnabled());
-		assertSame(view.lineItemTableViewer.getElementAt(0), newLineItem);
-	}
-	
 	/**
 	 * This test confirms that the service that listens for 
 	 * changes to a {@link LineItem} has been started. This service

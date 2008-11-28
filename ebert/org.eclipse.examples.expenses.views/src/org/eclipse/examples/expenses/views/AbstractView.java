@@ -64,6 +64,18 @@ public abstract class AbstractView extends ViewPart {
 	}
 
 	/**
+	 * This convenience method can be used to execute a {@link Runnable} in the
+	 * UI thread. It is used to run code that must be executed in the UI thread,
+	 * such as updates to UI components like buttons, text fields, and lists.
+	 * 
+	 * @see Display#syncExec
+	 * @param runnable
+	 */
+	protected void syncExec(Runnable runnable) {
+		getViewSite().getWorkbenchWindow().getShell().getDisplay().syncExec(runnable);
+	}
+	
+	/**
 	 * This method gets the current user's {@link ULocale}. For an RCP-based application,
 	 * this would typically be the default value; for an RAP application, this value
 	 * is determiend from the HTTP Session. In any case, this method looks for a service
