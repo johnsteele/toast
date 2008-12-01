@@ -11,21 +11,17 @@
 package org.eclipse.examples.expenses.views;
 
 import java.util.Date;
-import java.util.Locale;
 import java.util.Properties;
 
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
-import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.core.ObjectWithProperties;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUIModelAdapter;
 import org.eclipse.examples.expenses.ui.IExpenseReportingUIModel;
-import org.eclipse.jface.viewers.IBaseLabelProvider;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
-import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -47,11 +43,8 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.ISelectionService;
-import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchPartSite;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
 import org.osgi.service.event.Event;
@@ -61,8 +54,6 @@ import org.osgi.service.event.EventHandler;
 
 import com.ibm.icu.text.DateFormat;
 import com.ibm.icu.text.NumberFormat;
-import com.ibm.icu.util.Currency;
-import com.ibm.icu.util.ULocale;
 
 /**
  * This class provides a view that lets the user modify an {@link ExpenseReport}
@@ -201,7 +192,7 @@ public class ExpenseReportView extends AbstractView {
 	 * This {@link DateFormat} instance is used to format dates displayed in the
 	 * table.
 	 * 
-	 * TODO Need to find a way to use the local of the user when in RAP
+	 * TODO Need to find a way to use the locale of the user when in RAP (see Bug 237646)
 	 */
 	final DateFormat dateFormat = DateFormat.getDateInstance(DateFormat.SHORT);
 		
@@ -592,6 +583,14 @@ public class ExpenseReportView extends AbstractView {
 		lineItemChangedHandlerService = context.registerService(EventHandler.class.getName(), handler, properties);
 	}
 	
+	/**
+	 * This method starts the {@link #lineItemAddedHandlerService} service. This service
+	 * is notified (via the {@link EventHandler#handleEvent(Event)} method) whenever
+	 * a {@link LineItem} instance is added to an {@link ExpenseReport}.
+	 * 
+	 * @see #lineItemAddedHandlerService
+	 * @param context
+	 */
 	void startLineItemAddedHandlerService(BundleContext context) {
 		EventHandler handler = new EventHandler() {
 			public void handleEvent(final Event event) {
@@ -610,6 +609,14 @@ public class ExpenseReportView extends AbstractView {
 		lineItemAddedHandlerService = context.registerService(EventHandler.class.getName(), handler, properties);
 	}
 	
+	/**
+	 * This method starts the {@link #lineItemRemovedHandlerService} service. This service
+	 * is notified (via the {@link EventHandler#handleEvent(Event)} method) whenever
+	 * a {@link LineItem} instance is removed from an {@link ExpenseReport}.
+	 * 
+	 * @see #lineItemRemovedHandlerService
+	 * @param context
+	 */
 	void startLineItemRemovedHandlerService(BundleContext context) {
 		EventHandler handler = new EventHandler() {
 			public void handleEvent(final Event event) {

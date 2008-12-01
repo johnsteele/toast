@@ -13,13 +13,13 @@ package org.eclipse.examples.expenses.views;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.LineItem;
+import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,7 +45,7 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 		/*
 		 * Here, we create a subclass of ExpenseReport that changes the way that
 		 * the EventAdmin service is notified of a change event. See the
-		 * comments on the testTitleFieldUpdate method for more information.
+		 * comments on the #testTitleFieldUpdated method for more information.
 		 */
 		report = new ExpenseReport("My Expense Report") {
 			@Override
@@ -66,14 +66,28 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 		processEvents();
 	}
 	
+	/**
+	 * This test talks directly to the {@link IContentProvider} for the table
+	 * that displays {@link LineItem} instances, confirming that the content
+	 * provider knows how to obtain the list of line items from an
+	 * {@link ExpenseReport}.
+	 */
 	@Test
-	public void testThatContentProviderAnswersLineItemsForExpenseReport() throws Exception {		
+	public void testContentProviderAnswersLineItemsForExpenseReport() {		
 		Object[] elements = view.contentProvider.getElements(report);
 		assertArrayEquals(report.getLineItems(), elements);
 	}
 
+	/**
+	 * This test talks directly to the {@link IContentProvider} for the table
+	 * that displays {@link LineItem} instances, confirming that the content
+	 * provider answers an empty array when given an input that is <em>not</em>
+	 * an instance of {@link ExpenseReport}. FWIW, this is a condition that
+	 * should never actually happen, but since there's &quot;paranoia&quot; code
+	 * to check for the condition, we should still test it.
+	 */
 	@Test
-	public void testThatContentProviderAnswersEmptyArrayForInvalidInput() throws Exception {
+	public void testContentProviderAnswersEmptyArrayForInvalidInput() {
 		Object[] elements = view.contentProvider.getElements(new LineItem[5]);
 		assertArrayEquals(new Object[0], elements);
 	}
@@ -91,66 +105,106 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 	 * @see ExpenseReportView#getDateFormat()
 	 */
 	@Test
-	public void testThatDateFormatUsesCurrentLocale() throws Exception {
+	public void testDateFormatUsesCurrentLocale() {
 		assertEquals(DateFormat.getDateInstance(DateFormat.SHORT), view.getDateFormat());
 	}
 	
+	/**
+	 * This test works directly with the label provider for the table that displays
+	 * {@link LineItem} instances. Here, we're making sure that the value created
+	 * for the &quot;Date&quot; column is what we expect.
+	 */
 	@Test
-	public void testThatLabelProviderAnswersDate() throws Exception {
+	public void testLabelProviderAnswersDate() {
 		String expected = DateFormat.getDateInstance(DateFormat.SHORT).format(lineItemWithType.getDate());
 		String text = view.labelProvider.getColumnText(lineItemWithType, ExpenseReportView.DATE_COLUMN);
 		assertEquals(expected, text);
 	}
 	
+	/**
+	 * This test works directly with the label provider for the table that
+	 * displays {@link LineItem} instances. Here, we're making sure that the
+	 * value created for the &quot;Type&quot; column is what we expect when the
+	 * line item has a valid instance of {@link ExpenseType}.
+	 */
 	@Test
-	public void testThatLabelProviderAnswersTypeTitleWhenTypeIsSet() throws Exception {
+	public void testLabelProviderAnswersTypeTitleWhenTypeIsSet() {
 		assertEquals("Air fare", view.labelProvider.getColumnText(lineItemWithType, ExpenseReportView.TYPE_COLUMN));
 	}
-
+	
+	/**
+	 * This test works directly with the label provider for the table that
+	 * displays {@link LineItem} instances. Here, we're making sure that the
+	 * value created for the &quot;Type&quot; column is what we expect when the
+	 * line item does <em>not</em> have a type (i.e. the type is
+	 * <code>null</code>).
+	 */
 	@Test
-	public void testThatLabelProviderAnswersDefaulteWhenTypeIsNotSet() throws Exception {
+	public void testLabelProviderAnswersDefaulteWhenTypeIsNotSet() {
 		assertEquals("<specify type>", view.labelProvider.getColumnText(lineItemWithoutType, ExpenseReportView.TYPE_COLUMN));
 	}
-
+	
+	/**
+	 * This test works directly with the label provider for the table that displays
+	 * {@link LineItem} instances. Here, we're making sure that the value created
+	 * for the &quot;Amount&quot; column is what we expect.
+	 */
 	@Test
-	public void testThatLabelProviderAnswersCurrency() throws Exception {
+	public void testLabelProviderAnswersCurrency() {
 		assertEquals("$10.00", view.labelProvider.getColumnText(lineItemWithType, ExpenseReportView.AMOUNT_COLUMN));
 	}
-
+	
+	/**
+	 * This test works directly with the label provider for the table that displays
+	 * {@link LineItem} instances. Here, we're making sure that the value created
+	 * for the &quot;Comment&quot; column is what we expect.
+	 */
 	@Test
-	public void testThatLabelProviderAnswersComment() throws Exception {
+	public void testLabelProviderAnswersComment() throws Exception {
 		assertEquals("Comment", view.labelProvider.getColumnText(lineItemWithType, ExpenseReportView.COMMENT_COLUMN));
 	}
 	
+	/**
+	 * When an update occurs on one of the {@link LineItem}s, the table may need
+	 * to be updated. An optimization in JFace updates the table only when one
+	 * of the properties that are actually being displayed changes. Our label
+	 * provider knows which columns to look for. This method tests to make sure
+	 * that the label provider knows which properties to watch for changes.
+	 */
 	@Test
-	public void testThatLabelPropertiesAreCorrectlyIdentified() throws Exception {
+	public void testLabelPropertiesAreCorrectlyIdentified() {
 		assertTrue(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.DATE_PROPERTY));
 		assertTrue(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.AMOUNT_PROPERTY));
 		assertTrue(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.TYPE_PROPERTY));
 		assertTrue(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.COMMENT_PROPERTY));
+		assertTrue(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.TYPE_PROPERTY));
+		
+		assertFalse(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.EXCHANGE_RATE_PROPERTY));
 	}
 		
 	/**
-	 * This test confirms that the service that listens for 
-	 * changes to a {@link LineItem} has been started. This service
-	 * should have been started as part of the process of creating the
-	 * view.
+	 * This test confirms that the service that listens for changes to a
+	 * {@link LineItem} has been started. This service should have been started
+	 * as part of the process of creating the view.
 	 * 
+	 * @see ExpenseReportView#lineItemChangedHandlerService
 	 * @see ExpenseReportView#startLineItemChangedHandlerService(BundleContext)
-	 * @throws Exception
 	 */
 	@Test
-	public void testLineItemChangedHandlerServiceStarted() throws Exception {
+	public void testLineItemChangedHandlerServiceStarted() {
 		// If the service has not been registered, this should throw an exception.
 		view.lineItemChangedHandlerService.getReference();		
 	}
 	
 	/**
+	 * This test confirms that the service that listens for changes to {@link LineItem}
+	 * instances is shut down when the instance is disposed.
+	 * 
+	 * @see ExpenseReportView#lineItemChangedHandlerService
 	 * @see ExpenseReportView#dispose()
-	 * @throws Exception
 	 */
 	@Test
-	public void testLineItemChangedHandlerServiceStopped() throws Exception {
+	public void testLineItemChangedHandlerServiceStopped() {
 		getActivePage().hideView(view);
 		try {
 			view.lineItemChangedHandlerService.getReference();
@@ -165,7 +219,11 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 	}
 	
 	/**
-	 * @see ExpenseReportView#startLineItemRemovedHandlerService(BundleContext)
+	 * This method confirms that the {@link ExpenseReportView#lineItemAddedHandlerService}
+	 * service has been started.
+	 * 
+	 * @see ExpenseReportView#lineItemAddedHandlerService
+	 * @see ExpenseReportView#startLineItemAddedHandlerService(BundleContext)
 	 * @throws Exception
 	 */
 	@Test
@@ -175,11 +233,15 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 	}
 	
 	/**
+	 * This method confirms that the {@link ExpenseReportView#lineItemAddedHandlerService}
+	 * service has been stopped.
+	 * 
+	 * @see ExpenseReportView#lineItemAddedHandlerService
+	 * @see ExpenseReportView#startLineItemAddedHandlerService(BundleContext)
 	 * @see ExpenseReportView#dispose()
-	 * @throws Exception
 	 */
 	@Test
-	public void testLineItemAddedHandlerServiceStopped() throws Exception {
+	public void testLineItemAddedHandlerServiceStopped() {
 		getActivePage().hideView(view);
 		try {
 			view.lineItemAddedHandlerService.getReference();
@@ -194,18 +256,25 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 	}
 	
 	/**
+	 * This method confirms that the {@link ExpenseReportView#lineItemRemovedHandlerService}
+	 * service has been started.
+	 * 
+	 * @see ExpenseReportView#lineItemRemovedHandlerService
 	 * @see ExpenseReportView#startLineItemRemovedHandlerService(BundleContext)
-	 * @throws Exception
 	 */
 	@Test
-	public void testLineItemRemovedHandlerServiceStarted() throws Exception {
+	public void testLineItemRemovedHandlerServiceStarted() {
 		// If the service has not been registered, this should throw an exception.
 		view.lineItemRemovedHandlerService.getReference();		
 	}
 	
 	/**
+	 * This method confirms that the {@link ExpenseReportView#lineItemRemovedHandlerService}
+	 * service has been stopped.
+	 * 
+	 * @see ExpenseReportView#lineItemRemovedHandlerService
+	 * @see ExpenseReportView#startLineItemRemovedHandlerService(BundleContext)
 	 * @see ExpenseReportView#dispose()
-	 * @throws Exception
 	 */
 	@Test
 	public void testLineItemRemovedHandlerServiceStopped() throws Exception {
@@ -223,35 +292,26 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 	}
 	
 	/**
-	 * I am not aware of any mechanism to check to see if a particular
-	 * handler is registered with the selections service. For now, this
-	 * test will answer success.
-	 * 
-	 * TODO Confirm that the handler is indeed registered.
+	 * This method tests that the &quot;Remove&quot; button is properly updated
+	 * in response to a change in selection in the
+	 * {@link ExpenseReportView#lineItemTableViewer}; we force a selection into
+	 * the view and confirm that the button has become enabled as a result of
+	 * that change.
 	 */
 	@Test
-	public void testSelectionHandlerRegistered() {
-		
-	}
-	
-	/**
-	 * Likewise, I am not aware of any mechanism to check to see if a particular
-	 * handler is deregistered with the selections service.
-	 * 
-	 * TODO Confirm that the handler is indeed deregistered.
-	 */
-	@Test
-	public void testSelectionHandlerDeregistered() {
-		
-	}
-	
-	@Test
-	public void testRemoveButtonEnabledWhenLineItemSelected() throws Exception {
+	public void testRemoveButtonEnabledWhenLineItemSelected() {
 		view.lineItemTableViewer.setSelection(new StructuredSelection(lineItemWithType));
 		processEvents();
 		assertTrue(view.removeButton.isEnabled());
 	}
-	
+
+	/**
+	 * This method tests that the &quot;Remove&quot; button is properly updated
+	 * in response to a change in selection in the
+	 * {@link ExpenseReportView#lineItemTableViewer}; we force an empty
+	 * selection into the view and confirm that the button has become disabled
+	 * as a result of that change.
+	 */
 	@Test
 	public void testRemoveButtonDisabledWhenNoLineItemSelected() throws Exception {
 		view.lineItemTableViewer.setSelection(StructuredSelection.EMPTY);
