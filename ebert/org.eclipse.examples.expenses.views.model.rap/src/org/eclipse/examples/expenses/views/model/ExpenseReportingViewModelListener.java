@@ -8,24 +8,16 @@
  * Contributors:
  *    The Eclipse Foundation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.examples.expenses.ui;
+package org.eclipse.examples.expenses.views.model;
 
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 
-public class ExpenseReportingUIModelAdapter implements ExpenseReportingUIModelListener {
+public interface ExpenseReportingViewModelListener {
 
-	public void binderChanged(ExpensesBinder binder) {
-		
-	}
-
-	public void reportChanged(ExpenseReport report) {
-		
-	}
-
-	public void lineItemChanged(LineItem item) {
-		
-	}
+	void binderChanged(ExpensesBinder binder);
+	void reportChanged(ExpenseReport report);
+	void lineItemChanged(LineItem item);
 
 }

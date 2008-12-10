@@ -15,11 +15,12 @@ import java.util.Properties;
 
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
+import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.core.ObjectWithProperties;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
-import org.eclipse.examples.expenses.ui.ExpenseReportingUIModelAdapter;
-import org.eclipse.examples.expenses.ui.IExpenseReportingUIModel;
+import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
+import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModelListener;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -325,10 +326,14 @@ public class ExpenseReportView extends AbstractView {
 	private Composite titleArea;
 			
 
-	ExpenseReportingUIModelAdapter expenseReportingUIModelListener = new ExpenseReportingUIModelAdapter() {
+	ExpenseReportingViewModelListener expenseReportingUIModelListener = new ExpenseReportingViewModelListener() {
 		public void reportChanged(ExpenseReport report) {
 			setReport(report);
 		}
+
+		public void binderChanged(ExpensesBinder binder) {}
+
+		public void lineItemChanged(LineItem item) {}
 	};
 	
 	/**
@@ -349,16 +354,16 @@ public class ExpenseReportView extends AbstractView {
 		 * Add a listener to the UI Model; should the binder change, we'll update
 		 * ourselves to reflect that change.
 		 */
-		getExpenseReportingUIModel().addListener(expenseReportingUIModelListener);
-		setReport(getExpenseReportingUIModel().getReport());
+		getExpenseReportingViewModel().addListener(expenseReportingUIModelListener);
+		setReport(getExpenseReportingViewModel().getReport());
 		
 		startEventHandlers();
 
 		updateRemoveButton();
 	}
 
-	private IExpenseReportingUIModel getExpenseReportingUIModel() {
-		return ExpenseReportingUI.getDefault().getExpenseReportingUIModel();
+	private ExpenseReportingViewModel getExpenseReportingViewModel() {
+		return ExpenseReportingUI.getDefault().getExpenseReportingViewModel();
 	}
 
 	protected NumberFormat getCurrencyFormat() {
@@ -420,7 +425,7 @@ public class ExpenseReportView extends AbstractView {
 		lineItemTableViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				IStructuredSelection selection = (IStructuredSelection)event.getSelection();
-				getExpenseReportingUIModel().setLineItem((LineItem) selection.getFirstElement());
+				getExpenseReportingViewModel().setLineItem((LineItem) selection.getFirstElement());
 			}			
 		});
 		
@@ -654,7 +659,7 @@ public class ExpenseReportView extends AbstractView {
 		lineItemChangedHandlerService.unregister();
 		expenseReportChangedEventHandlerService.unregister();
 		
-		getExpenseReportingUIModel().removeListener(expenseReportingUIModelListener);
+		getExpenseReportingViewModel().removeListener(expenseReportingUIModelListener);
 		
 		super.dispose();
 	}

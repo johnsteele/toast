@@ -18,18 +18,19 @@ import org.eclipse.core.databinding.observable.masterdetail.IObservableFactory;
 import org.eclipse.core.databinding.observable.masterdetail.MasterDetailObservables;
 import org.eclipse.core.databinding.observable.value.IObservableValue;
 import org.eclipse.core.databinding.observable.value.WritableValue;
+import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.core.ObjectWithProperties;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
-import org.eclipse.examples.expenses.ui.ExpenseReportingUIModelAdapter;
-import org.eclipse.examples.expenses.ui.IExpenseReportingUIModel;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyField;
 import org.eclipse.examples.expenses.views.databinding.DateFieldObserverableValue;
 import org.eclipse.examples.expenses.views.databinding.MoneyFieldObserverableValue;
 import org.eclipse.examples.expenses.views.databinding.ObjectWithPropertiesObservableValue;
 import org.eclipse.examples.expenses.views.databinding.ObjectWithPropertiesObservableValue.PropertyGetterSetter;
+import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
+import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModelListener;
 import org.eclipse.examples.expenses.widgets.datefield.DateField;
 import org.eclipse.jface.databinding.swt.SWTObservables;
 import org.eclipse.jface.databinding.viewers.ViewersObservables;
@@ -159,10 +160,14 @@ public class LineItemView extends AbstractView {
 
 	private DataBindingContext bindingContext;
 
-	ExpenseReportingUIModelAdapter expenseReportingUIModelListener = new ExpenseReportingUIModelAdapter() {
+	ExpenseReportingViewModelListener expenseReportingUIModelListener = new ExpenseReportingViewModelListener() {
 		public void lineItemChanged(LineItem lineItem) {
 			setLineItem(lineItem);
 		}
+
+		public void binderChanged(ExpensesBinder binder) {}
+
+		public void reportChanged(ExpenseReport report) {}
 	};
 
 	public void createPartControl(final Composite parent) {
@@ -195,8 +200,8 @@ public class LineItemView extends AbstractView {
 		 * Add a listener to the UI Model; should the binder change, we'll update
 		 * ourselves to reflect that change.
 		 */
-		getExpenseReportingUIModel().addListener(expenseReportingUIModelListener);
-		setLineItem(getExpenseReportingUIModel().getLineItem());
+		getExpenseReportingViewModel().addListener(expenseReportingUIModelListener);
+		setLineItem(getExpenseReportingViewModel().getLineItem());
 		
 		/*
 		 * ControlUpdaters is provisional API. This means that--strictly speaking--it
@@ -212,8 +217,8 @@ public class LineItemView extends AbstractView {
 		};
 	}
 
-	private IExpenseReportingUIModel getExpenseReportingUIModel() {
-		return ExpenseReportingUI.getDefault().getExpenseReportingUIModel();
+	private ExpenseReportingViewModel getExpenseReportingViewModel() {
+		return ExpenseReportingUI.getDefault().getExpenseReportingViewModel();
 	}
 
 	public void dispose() {

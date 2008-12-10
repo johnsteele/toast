@@ -10,13 +10,14 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.ui;
 
+import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 public class ExpenseReportingUI implements BundleActivator {
 	static ExpenseReportingUI instance;
 	private BundleContext context;
-	private IExpenseReportingUIModel expenseReportingUIModel;
+	private ExpenseReportingViewModel expenseReportingViewModel;
 
 	public ExpenseReportingUI() {
 		instance = this;
@@ -28,12 +29,12 @@ public class ExpenseReportingUI implements BundleActivator {
 	
 	public void start(BundleContext context) throws Exception {
 		this.context = context;
-		expenseReportingUIModel = new ExpenseReportingUIModelProxy(context);
+		expenseReportingViewModel = new ExpenseReportingViewModel();
 	}
 
 	public void stop(BundleContext context) throws Exception {
-		expenseReportingUIModel.dispose();
-		expenseReportingUIModel = null;
+		expenseReportingViewModel.dispose();
+		expenseReportingViewModel = null;
 		context = null;
 	}
 	
@@ -41,7 +42,7 @@ public class ExpenseReportingUI implements BundleActivator {
 		return context;
 	}
 
-	public IExpenseReportingUIModel getExpenseReportingUIModel() {
-		return expenseReportingUIModel;
+	public ExpenseReportingViewModel getExpenseReportingViewModel() {
+		return expenseReportingViewModel;
 	}
 }

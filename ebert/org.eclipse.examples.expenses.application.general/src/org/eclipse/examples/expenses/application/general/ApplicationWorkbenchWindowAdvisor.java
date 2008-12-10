@@ -44,6 +44,6 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
 	
 	public void postWindowCreate() {
 		ExpensesBinder binder = applicationStateManager.getBinder();
-		ExpenseReportingUI.getDefault().getExpenseReportingUIModel().setBinder(binder);
+		ExpenseReportingUI.getDefault().getExpenseReportingViewModel().setBinder(binder);
 	}
 }

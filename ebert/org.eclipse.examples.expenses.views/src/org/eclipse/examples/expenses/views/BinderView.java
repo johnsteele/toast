@@ -13,9 +13,10 @@ package org.eclipse.examples.expenses.views;
 import org.eclipse.examples.expenses.core.CollectionPropertyChangeEvent;
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
+import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
-import org.eclipse.examples.expenses.ui.ExpenseReportingUIModelAdapter;
-import org.eclipse.examples.expenses.ui.IExpenseReportingUIModel;
+import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
+import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModelListener;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -159,10 +160,14 @@ public class BinderView extends AbstractView {
 		}		
 	};
 
-	ExpenseReportingUIModelAdapter expenseReportingUIModelListener = new ExpenseReportingUIModelAdapter() {
+	ExpenseReportingViewModelListener expenseReportingUIModelListener = new ExpenseReportingViewModelListener() {
 		public void binderChanged(ExpensesBinder binder) {
 			setBinder(binder);
 		}
+
+		public void lineItemChanged(LineItem item) {}
+
+		public void reportChanged(ExpenseReport report) {}
 	};
 	
 	IPropertyChangeListener expenseReportListener = new IPropertyChangeListener() {
@@ -222,8 +227,8 @@ public class BinderView extends AbstractView {
 		 * Add a listener to the UI Model; should the binder change, we'll update
 		 * ourselves to reflect that change.
 		 */
-		getExpenseReportingUIModel().addListener(expenseReportingUIModelListener);
-		setBinder(getExpenseReportingUIModel().getBinder());
+		getExpenseReportingViewModel().addListener(expenseReportingUIModelListener);
+		setBinder(getExpenseReportingViewModel().getBinder());
 		
 		viewer.setInput(getBinder());
 	}
@@ -235,7 +240,7 @@ public class BinderView extends AbstractView {
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				IStructuredSelection selection = (IStructuredSelection)event.getSelection();
-				getExpenseReportingUIModel().setReport((ExpenseReport) selection.getFirstElement());
+				getExpenseReportingViewModel().setReport((ExpenseReport) selection.getFirstElement());
 			}			
 		});
 		getSite().setSelectionProvider(viewer);
@@ -245,17 +250,17 @@ public class BinderView extends AbstractView {
 	/**
 	 * This method obtains the UI Model from the activator.
 	 * 
-	 * @see ExpenseReportingUI#getExpenseReportingUIModel()
+	 * @see ExpenseReportingUI#getExpenseReportingViewModel()
 	 * 
 	 * @return An instance of a class that implements {@link IExpenseReportingUIModel} 
 	 * that is appropriate for the current user.
 	 */
-	private IExpenseReportingUIModel getExpenseReportingUIModel() {
-		return ExpenseReportingUI.getDefault().getExpenseReportingUIModel();
+	private ExpenseReportingViewModel getExpenseReportingViewModel() {
+		return ExpenseReportingUI.getDefault().getExpenseReportingViewModel();
 	}
 
 	public void dispose() {
-		getExpenseReportingUIModel().removeListener(expenseReportingUIModelListener);
+		getExpenseReportingViewModel().removeListener(expenseReportingUIModelListener);
 		super.dispose();
 	}
 
