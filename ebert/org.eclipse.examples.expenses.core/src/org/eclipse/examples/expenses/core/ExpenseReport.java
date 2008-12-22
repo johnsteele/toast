@@ -15,15 +15,45 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
-
+/**
+ * An ExpenseReport represents a collection of expenses made together, perhaps
+ * the result of a business trip or the like. Pragmatically, an ExpenseReport has
+ * a title (description) and a collection of {@link LineItem}s, each representing
+ * an individual expense.
+ */
 public class ExpenseReport extends ObjectWithProperties implements Serializable {
-	
-	public static final String LINEITEMS_PROPERTY = "lineItems";
-	public static final String TITLE_PROPERTY = "title";
+	private static final long serialVersionUID = -7372269354627281476L;
 		
-	private String title;
+	/**
+	 * The LINEITEMS_PROPERTY constant holds the name of the property used
+	 * to notify observers that a change has occurred in the &quot;lineItems&quot; property.
+	 */
+	public static final String LINEITEMS_PROPERTY = "lineItems";
+	
+	/**
+	 * The TITLE_PROPERTY constant holds the name of the property used to
+	 * notify observers that a change has occurred in the &quot;title&quot; property.
+	 */
+	public static final String TITLE_PROPERTY = "title";
+	
+	/**
+	 * The title field contains a one-line title (or description) that helps the
+	 * user to identify the instance.
+	 * 
+	 * @see setTitle
+	 * @see getTitle
+	 */
+	String title;
+	
+	/**
+	 * The lineItems field contains the list of {@link LineItem} instances referenced
+	 * by the receiver. Note that the {@link List} that's used to hold the {@link LineItem}s
+	 * is never exposed directly to consumers.
+	 * 
+	 * @see getLineItems
+	 * @see addLineItem
+	 * @see removeLineItem
+	 */
 	List lineItems = new ArrayList();
 
 	public ExpenseReport(String title) {
@@ -62,6 +92,7 @@ public class ExpenseReport extends ObjectWithProperties implements Serializable 
 	
 	public void removeLineItem(LineItem lineItem) {
 		lineItems.remove(lineItem);
+		
 		fireCollectionEvent(LINEITEMS_PROPERTY, lineItems, OBJECT_REMOVED, lineItem);
 	}	
 }

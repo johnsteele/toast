@@ -27,6 +27,17 @@ import org.eclipse.nebula.widgets.cdatetime.CDateTimeCellEditor;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IViewPart;
 
+/**
+ * The ViewCustomizer class is used to, as the name suggests, customize the
+ * various views employed by the application. The initial layout of the views
+ * follows a lowest common denominator approach: they are designed to work on
+ * RCP, RAP, and eRCP. This customizer is used to enhance the views to leverage
+ * abilities inherent in the RCP. This customizer, for example, adds editing
+ * support to some of the columns in the {@link ExpenseReportView}'s table.
+ * 
+ * @see IViewCustomizer
+ * @see ExpenseReportView
+ */
 public class ViewCustomizer implements IViewCustomizer {
 
 	public void customizeView(Composite parent, IViewPart view) {

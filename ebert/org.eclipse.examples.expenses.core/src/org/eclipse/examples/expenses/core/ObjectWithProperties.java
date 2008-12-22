@@ -17,10 +17,8 @@ import java.util.Properties;
 import org.eclipse.core.runtime.ListenerList;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
-import org.osgi.framework.BundleContext;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
-import org.osgi.service.event.EventConstants;
 import org.osgi.service.event.EventHandler;
 
 /**
@@ -32,7 +30,7 @@ import org.osgi.service.event.EventHandler;
  * To make use of the observer-style events, interested objects can add (and
  * remove) listeners to (from) an instance via the
  * {@link #addPropertyChangeListener(IPropertyChangeListener)} and
- *{@link #removePropertyChangeListener(IPropertyChangeListener)} methods. When
+ * {@link #removePropertyChangeListener(IPropertyChangeListener)} methods. When
  * a property changes, registered listeners&mdash;instances of
  * {@link IPropertyChangeListener}&mdash; are sent the
  * {@link IPropertyChangeListener#propertyChange(PropertyChangeEvent)} message
@@ -85,6 +83,8 @@ import org.osgi.service.event.EventHandler;
  * override this behaviour).
  */
 public abstract class ObjectWithProperties implements Serializable {
+	private static final long serialVersionUID = 5776294072021059051L;
+	
 	public static final String PROPERTY_CHANGE_TOPIC = "PropertyChange";
 	public static final String SOURCE = "source";
 	public static final String PROPERTY_NAME = "propertyName";

@@ -35,9 +35,6 @@ import org.eclipse.jface.util.PropertyChangeEvent;
  * 
  * <p>
  * The {@link #added} and {@link #removed} fields are never <code>null</code>.
- * 
- * @author wayne
- * 
  */
 public class CollectionPropertyChangeEvent extends PropertyChangeEvent {
 

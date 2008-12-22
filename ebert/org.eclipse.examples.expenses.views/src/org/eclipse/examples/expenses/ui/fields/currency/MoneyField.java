@@ -32,6 +32,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Text;
 
@@ -40,6 +41,15 @@ import com.ibm.icu.util.Currency;
 import com.ibm.icu.util.CurrencyAmount;
 import com.ibm.icu.util.ULocale;
 
+/**
+ * MoneyField is a custom widget for displaying and capturing a
+ * {@link CurrencyAmount} instance from the user. The current implementation
+ * uses a combination of a {@link Text} field and a {@link Combo}/
+ * {@link ComboViewer} to capture a {@link Number} and a {@link Currency}. ICU4J
+ * is used. *
+ * <p>
+ * Bug 259517 suggests changing this to use auto completion instead.
+ */
 public class MoneyField extends Composite {
 	Text amountText;
 	ComboViewer currencyViewer;

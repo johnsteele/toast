@@ -14,6 +14,20 @@ import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
+/**
+ * ExpenseReportingUI is an activator for the
+ * org.eclipse.examples.expenses.views bundle. Its main role is to provide a
+ * entry point for the view model, an instance of
+ * {@link ExpenseReportingViewModel}.
+ * 
+ * <p>
+ * At first glance, this would appear to be a singleton value that would
+ * restrict its usefulness in the RAP (i.e. multiple user) version of this
+ * application. However, multiple versions of this class are provided (one for
+ * RAP, one for RCP/eRCP); at runtime, we link in the correct one. The RAP
+ * version is aware of the multiple-user nature of the environment and reacts
+ * accordingly. This implementation will be revisited with Bug 259516.
+ */
 public class ExpenseReportingUI implements BundleActivator {
 	static ExpenseReportingUI instance;
 	private BundleContext context;

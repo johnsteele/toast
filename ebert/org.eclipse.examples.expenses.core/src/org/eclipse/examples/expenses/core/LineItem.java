@@ -21,18 +21,92 @@ import com.ibm.icu.util.Currency;
 import com.ibm.icu.util.CurrencyAmount;
 
 public class LineItem extends ObjectWithProperties implements Serializable {
-	public static final String DATE_PROPERTY = "date";
+	private static final long serialVersionUID = -1018224652196877185L;
+
+	/**
+	 * The DATE_PROPERTY constant holds the name of the property used to
+	 * notify observers that a change has occurred in the &quot;date&quot; property.
+	 */
+	public static final String DATE_PROPERTY = "date";	
+	
+	/**
+	 * The type_PROPERTY constant holds the name of the property used to
+	 * notify observers that a change has occurred in the &quot;type&quot; property.
+	 */
 	public static final String TYPE_PROPERTY = "type";
+	
+	/**
+	 * The AMOUNT_PROPERTY constant holds the name of the property used to
+	 * notify observers that a change has occurred in the &quot;amount&quot; property.
+	 */
 	public static final String AMOUNT_PROPERTY = "amount";
+	
+	/**
+	 * The EXCHANGE_RATE_PROPERTY constant holds the name of the property used to
+	 * notify observers that a change has occurred in the &quot;exchangeRate&quot; property.
+	 */
 	public static final String EXCHANGE_RATE_PROPERTY = "exchangeRate";
+	
+	/**
+	 * The COMMENT_PROPERTY constant holds the name of the property used to
+	 * notify observers that a change has occurred in the &quot;comment&quot; property.
+	 */
 	public static final String COMMENT_PROPERTY = "comment";
+	
+	/**
+	 * The PROPERTIES constant holds an array containing the names of all LineItem properties.
+	 */
 	public static final String[] PROPERTIES = new String[] {
 		DATE_PROPERTY, TYPE_PROPERTY, AMOUNT_PROPERTY, EXCHANGE_RATE_PROPERTY, COMMENT_PROPERTY};
 		
+	/**
+	 * The date that this expense was incurred. The default value, which is created by the
+	 * constructor is the current date.
+	 * 
+	 * @see getDate
+	 * @see setDate
+	 */
 	Date date;
+	
+	/**
+	 * The type of the expense. This value should generally be an instance of {@link ExpenseType}
+	 * taken from the {@link ExpensesBinder#getTypes()}. The default value is <code>null</code>.
+	 * 
+	 * @see getType
+	 * @see setType
+	 */
 	ExpenseType type;
+	
+	/**
+	 * The amount of the expense. We use the {@link CurrencyAmount} type from ICU4J.
+	 * The default value is CAD$0.
+	 * 
+	 * @see getAmount
+	 * @see setAmount
+	 * 
+	 * TODO This value should be specified in the binder's default currency (Bug 239512).
+	 */
 	CurrencyAmount amount = new CurrencyAmount(new Integer(0), Currency.getInstance(Locale.CANADA));
+	
+	/**
+	 * The comment is arbitrary text describing the receiver. The default value is <code>null</code>.
+	 * 
+	 * @see getComment
+	 * @see setComment
+	 */
 	String comment;
+	
+	/**
+	 * The exchangeRate is used to override any exchange rate value that's
+	 * automatically determined. In computing the value of the expense report,
+	 * for example, an external exchange rate web service might report a rate
+	 * that's different from the one actually incurred. This gives us an
+	 * opportunity to override that value. A value of 0.0 (the default)
+	 * indicates that the default value should be used.
+	 * 
+	 * @see getExchangeRate
+	 * @see setExchangeRate
+	 */
 	double exchangeRate = 0.0;
 
 	public LineItem() {
@@ -94,7 +168,7 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 	public double getExchangeRate() {
 		return exchangeRate;
 	}
-	
+
 	private void writeObject(java.io.ObjectOutputStream stream) throws IOException {
 		stream.writeObject(date);
 		stream.writeInt(type == null ? -1 : type.ordinality);
