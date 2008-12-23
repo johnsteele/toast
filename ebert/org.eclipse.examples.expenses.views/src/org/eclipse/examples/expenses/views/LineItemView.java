@@ -10,44 +10,48 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.views;
 
+import java.text.NumberFormat;
+import java.text.ParseException;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import org.eclipse.core.databinding.DataBindingContext;
-import org.eclipse.core.databinding.observable.IObservable;
-import org.eclipse.core.databinding.observable.masterdetail.IObservableFactory;
-import org.eclipse.core.databinding.observable.masterdetail.MasterDetailObservables;
-import org.eclipse.core.databinding.observable.value.IObservableValue;
-import org.eclipse.core.databinding.observable.value.WritableValue;
-import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
-import org.eclipse.examples.expenses.core.ObjectWithProperties;
-import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
+import org.eclipse.examples.expenses.ui.fields.currency.IMoneyChangeListener;
+import org.eclipse.examples.expenses.ui.fields.currency.MoneyChangeEvent;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyField;
 import org.eclipse.examples.expenses.views.databinding.DateFieldObserverableValue;
 import org.eclipse.examples.expenses.views.databinding.MoneyFieldObserverableValue;
 import org.eclipse.examples.expenses.views.databinding.ObjectWithPropertiesObservableValue;
-import org.eclipse.examples.expenses.views.databinding.ObjectWithPropertiesObservableValue.PropertyGetterSetter;
-import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
-import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModelListener;
 import org.eclipse.examples.expenses.widgets.datefield.DateField;
-import org.eclipse.jface.databinding.swt.SWTObservables;
-import org.eclipse.jface.databinding.viewers.ViewersObservables;
-import org.eclipse.jface.internal.databinding.provisional.swt.ControlUpdater;
+import org.eclipse.examples.expenses.widgets.datefield.common.DateChangeEvent;
+import org.eclipse.examples.expenses.widgets.datefield.common.IDateChangeListener;
 import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ComboViewer;
 import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.ISelectionListener;
+import org.eclipse.ui.ISelectionService;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.ViewPart;
 
 import com.ibm.icu.util.CurrencyAmount;
@@ -81,9 +85,6 @@ import com.ibm.icu.util.CurrencyAmount;
  * @see ObjectWithPropertiesObservableValue
  * @see DateFieldObserverableValue
  * @see MoneyFieldObserverableValue
- * 
- * @author wayne
- * 
  */
 public class LineItemView extends AbstractView {
 
@@ -94,14 +95,11 @@ public class LineItemView extends AbstractView {
 	public static final String ID = LineItemView.class.getName();
 	
 	/**
-	 * The domain model is represented as an {@link IObservableValue} so that we
-	 * can use it as a &quot;master&quot; with JFace DataBinding. All the
-	 * widgets on this part are bound to this observable though the databinding
-	 * API. When the contents of this holder changes, all the bindings are
-	 * updated from the contents of the new value.
+	 * The lineItem field contains the instance of {@link LineItem}
+	 * being considered by the view.
 	 */
-	IObservableValue lineItem = new WritableValue();
-		
+	LineItem lineItem;
+			
 	/**
 	 * This field is an instance of {@link DateField} used to view and choose a
 	 * date for the {@link LineItem}. The technology for capturing dates varies
@@ -125,7 +123,7 @@ public class LineItemView extends AbstractView {
 	 * TODO Comment contains references to datefield bundles. Keep up-to-date.
 	 */
 	DateField dateField;
-
+	
 	/**
 	 * This {@link ComboViewer} provides a dropdown that allows the user to
 	 * select an {@link ExpenseType} for the {@link LineItem}.
@@ -133,7 +131,6 @@ public class LineItemView extends AbstractView {
 	 * @see #createTypeField(Composite)
 	 */
 	ComboViewer typeDropdown;
-
 	/**
 	 * {@link MoneyField} is a custom widget that is used to display and specify
 	 * a monetary amount (instance of {@link CurrencyAmount}.
@@ -141,7 +138,6 @@ public class LineItemView extends AbstractView {
 	 * @see #createAmountField(Composite)
 	 */
 	MoneyField amountField;
-
 	/**
 	 * This {@link Text} is used to display and specify a comment for the
 	 * {@link LineItem}.
@@ -158,24 +154,69 @@ public class LineItemView extends AbstractView {
 	 */
 	Text exchangeRateText;
 
-	private DataBindingContext bindingContext;
-
-	ExpenseReportingViewModelListener expenseReportingUIModelListener = new ExpenseReportingViewModelListener() {
-		public void lineItemChanged(LineItem lineItem) {
-			setLineItem(lineItem);
-		}
-
-		public void binderChanged(ExpensesBinder binder) {}
-
-		public void reportChanged(ExpenseReport report) {}
+	/**
+	 * The exchangeRateFormat takes care of parsing user input and formatting
+	 * output for the exchangeRateText field.
+	 * 
+	 * @see #exchangeRateText
+	 * @see #createExchangeRateField(Composite)
+	 * @see #update()
+	 * @see #propertyChangeListener
+	 */
+	NumberFormat exchangeRateFormat = NumberFormat.getInstance();	
+	
+	ISelectionListener selectionListener = new ISelectionListener() {
+		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+			handleSelection(selection);
+		}	
 	};
 
-	public void createPartControl(final Composite parent) {
-		parent.setLayout(new GridLayout(2, false));
+	/**
+	 * Instances of the {@link FieldStateHandler} class are used to manage the state
+	 * of the fields. One instance of this class is created for each field. One of
+	 * the main ideas behind this implementation is to make it so that we can put
+	 * as much information as possible about each field and how it is managed in
+	 * a single place. More specifically, most of the information and behaviour
+	 * for a field is found in the corresponding &quot;create&quot; method.
+	 * 
+	 * @see #propertyChangeListener
+	 * @see #update()
+	 * @see #createAmountField(Composite)
+	 * @see #createCommentField(Composite)
+	 * @see #createDateField(Composite)
+	 * @see #createExchangeRateField(Composite)
+	 * @see #createCommentField(Composite)
+	 */
+	abstract class FieldStateHandler {
+		public abstract void propertyChanged(Object oldValue, Object newValue);
+		public abstract void update();
+	}
+	
+	Map fieldHandlers = new HashMap();
+	
+	private IPropertyChangeListener propertyChangeListener = new IPropertyChangeListener() {
 
-		bindingContext = new DataBindingContext();
+		/**
+		 * When we get a property change event, we deindex the property name
+		 * into the #fieldHandlers {@link Map} to find the appropriate instance
+		 * of {@link FieldStateHandler} which we invoke via the
+		 * {@link FieldStateHandler#propertyChanged(Object, Object)} method to react
+		 * to the change. The alternative here is a huge list of nested ifs;
+		 * this is more object-oriented.
+		 */
+		public void propertyChange(PropertyChangeEvent event) {
+			FieldStateHandler handler = (FieldStateHandler)fieldHandlers.get(event.getProperty());
+			if (handler == null) return;
+			handler.propertyChanged(event.getOldValue(), event.getNewValue());
+		}			
+	};
+	
+	
+	public void createPartControl(Composite parent) {
+		parent.setLayout(new GridLayout(2, false));
+				
 		createDateLabel(parent);
-		createDateField(parent, bindingContext);
+		createDateField(parent);
 
 		createTypeLabel(parent);
 		createTypeField(parent);
@@ -193,75 +234,82 @@ public class LineItemView extends AbstractView {
 		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
 		layoutData.horizontalSpan = 2;
 		buttons.setLayoutData(layoutData);
-				
-		customizeView(parent);		
-
-		/*
-		 * Add a listener to the UI Model; should the binder change, we'll update
-		 * ourselves to reflect that change.
-		 */
-		getExpenseReportingViewModel().addListener(expenseReportingUIModelListener);
-		setLineItem(getExpenseReportingViewModel().getLineItem());
 		
-		/*
-		 * ControlUpdaters is provisional API. This means that--strictly speaking--it
-		 * is not currently part of the API and use of this class is--strictly speaking--a
-		 * violation of one of the values of the Examples project. However, in an effort
-		 * to keep the code here as concise as possible, and in anticipation of this
-		 * class becoming API, we're gonna allow it.
-		 */
-		new ControlUpdater(parent) {
-			protected void updateControl() {
-				parent.setEnabled(lineItem.getValue() != null);
-			}
-		};
+		update();
+		
+		hookSelectionListener();
+		
+		customizeView(parent);
 	}
 
-	private ExpenseReportingViewModel getExpenseReportingViewModel() {
-		return ExpenseReportingUI.getDefault().getExpenseReportingViewModel();
-	}
 
 	public void dispose() {
-		bindingContext.dispose();
+		unhookListeners(lineItem);
+		unhookSelectionListener();
+	}
+	
+	void unhookSelectionListener() {
+		ISelectionService selectionService = getSite().getWorkbenchWindow().getSelectionService();
+		if (selectionService == null) return;
+		selectionService.removeSelectionListener(selectionListener);
+	}
+
+	void hookSelectionListener() {
+		ISelectionService selectionService = getSite().getWorkbenchWindow().getSelectionService();
+		if (selectionService == null) return;
+		selectionService.addSelectionListener(selectionListener);
 	}
 	
 	protected void createDateLabel(Composite parent) {
 		Label dateLabel = new Label(parent, SWT.NONE);
 		dateLabel.setText("Date:");			
 	}
-		
+	
 	/**
 	 * This method creates a field for capturing the date from the user. The
 	 * technology for capturing dates varies by target, so we lean heavily on
 	 * the Equinox dependency matching.
-	 *  
-	 * @see #dateField
+	 * <p>
+	 * More specifically, in the manifest for this bundle, we import the package
+	 * that contains the definition of the DateField. The actual bundle that
+	 * contributes this package is determined at runtime. At the time of this
+	 * writing, we have two possible implementations. The
+	 * org.eclipse.examples.expenses.widgets.datefield.basic bundle provides a
+	 * very simple SWT-widgets-based implementation. This implementation is
+	 * appropriate for the RAP and eRCP platforms which currently do not include
+	 * rich date-capturing fields. The
+	 * org.eclipse.examples.expenses.widgets.datefield.nebula bundle uses
+	 * Nebula's CDateTime widget which is fully supported on RCP. Both of these
+	 * bundles contribute the same class in the same package; at runtime, only
+	 * one of them should be available.
+	 * 
 	 * TODO Comment contains references to datefield bundles. Keep up-to-date.
-	 * @param bindingContext 
 	 */
-	protected void createDateField(Composite parent, DataBindingContext bindingContext) {
+	protected void createDateField(Composite parent) {
 		dateField = new DateField(parent);
 
 		dateField.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		
-		IObservableValue dateFieldObservable = new DateFieldObserverableValue(dateField);
-		IObservableValue datePropertyObservable = observeLineItemProperty(LineItem.DATE_PROPERTY, new ObjectWithPropertiesObservableValue.PropertyGetterSetter() {
-
-			public Object getValue(Object source) {
-				return ((LineItem)source).getDate();
-			}
-
-			public void setValue(Object source, Object value) {
-				((LineItem)source).setDate((Date)value);
-			}
-			
-			public Object getType() {
-				return Date.class;
-			}
-			
+		dateField.addDateListener(new IDateChangeListener() {
+			public void dateChange(DateChangeEvent event) {
+				if (lineItem == null) return;
+				lineItem.setDate(event.getNewValue());
+			}					
 		});
-		
-		bindingContext.bindValue(dateFieldObservable, datePropertyObservable, null, null);
+		fieldHandlers.put(LineItem.DATE_PROPERTY, new FieldStateHandler() {
+			public void propertyChanged(Object oldValue, Object newValue) {
+				dateField.setDate((Date)newValue);
+			}
+
+			public void update() {
+				if (lineItem == null) {
+					dateField.setEnabled(false);
+					dateField.setDate(null);
+				} else {
+					dateField.setEnabled(true);
+					dateField.setDate(lineItem.getDate());
+				}
+			}
+		});
 	}
 
 	private void createTypeLabel(Composite parent) {
@@ -289,39 +337,33 @@ public class LineItemView extends AbstractView {
 			}
 		});
 		typeDropdown.setInput(ExpensesBinder.getTypes());
-		
-		IObservableValue typeDropDownObservable = ViewersObservables.observeSingleSelection(typeDropdown);
-		IObservableValue typePropertyObservable = observeLineItemProperty(LineItem.TYPE_PROPERTY, new ObjectWithPropertiesObservableValue.PropertyGetterSetter() {
-			public Object getValue(Object source) {
-				return ((LineItem)source).getType();
+		typeDropdown.addSelectionChangedListener(new ISelectionChangedListener() {
+			public void selectionChanged(SelectionChangedEvent event) {
+				if (lineItem == null) return;
+				IStructuredSelection selection = (IStructuredSelection)event.getSelection();
+				if (selection == null) return;
+				lineItem.setType((ExpenseType)selection.getFirstElement());
+			}			
+		});
+		fieldHandlers.put(LineItem.TYPE_PROPERTY, new FieldStateHandler() {
+			public void propertyChanged(Object oldValue, Object newValue) {
+				setSelection(newValue);
 			}
 
-			public void setValue(Object source, Object value) {
-				((LineItem)source).setType((ExpenseType)value);
+			public void update() {
+				if (lineItem == null) {
+					typeDropdown.getCombo().setEnabled(false);
+					typeDropdown.setSelection(StructuredSelection.EMPTY);
+				} else {
+					typeDropdown.getCombo().setEnabled(true);
+					setSelection(lineItem.getType());
+				}
 			}
-
-			public Object getType() {
-				return ExpenseType.class;
+			
+			private void setSelection(Object selection) {
+				typeDropdown.setSelection(selection == null ? StructuredSelection.EMPTY : new StructuredSelection(selection));
 			}
 		});
-		bindingContext.bindValue(typeDropDownObservable, typePropertyObservable, null, null);
-	}
-
-	/**
-	 * This method creates an {@link IObservableValue} for the property named <code>propertyName</code>
-	 * of the current {@link LineItem}.
-	 * 
-	 * @param propertyName
-	 * @param getterSetter
-	 * @return
-	 */
-	private IObservableValue observeLineItemProperty(final String propertyName, final PropertyGetterSetter getterSetter) {
-		IObservableFactory factory = new IObservableFactory() {
-			public IObservable createObservable(Object target) {
-				return new ObjectWithPropertiesObservableValue((ObjectWithProperties)target, propertyName, getterSetter);
-			}			
-		};
-		return MasterDetailObservables.detailValue(lineItem, factory, getterSetter.getType());
 	}
 
 	protected void createAmountLabel(Composite parent) {
@@ -329,29 +371,32 @@ public class LineItemView extends AbstractView {
 		label.setText("Amount:");			
 	}
 	
-	// TODO Consider making this a public class 
-
-	
 	protected void createAmountField(Composite parent) {
 		amountField = new MoneyField(parent, SWT.NONE);
 		amountField.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		
-		IObservableValue amountFieldObservable = new MoneyFieldObserverableValue(amountField);
-		IObservableValue amountPropertyObservable = observeLineItemProperty(LineItem.AMOUNT_PROPERTY, new ObjectWithPropertiesObservableValue.PropertyGetterSetter() {
-
-			public Object getValue(Object source) {
-				return ((LineItem)source).getAmount();
-			}
-
-			public void setValue(Object source, Object value) {
-				((LineItem)source).setAmount((CurrencyAmount)value);
-			}
-			
-			public Object getType() {
-				return CurrencyAmount.class;
+		amountField.addMoneyChangeListener(new IMoneyChangeListener() {
+			public void moneyChange(MoneyChangeEvent event) {
+				if (lineItem == null) return;
+				lineItem.setAmount(event.getNewValue());
 			}			
 		});
-		bindingContext.bindValue(amountFieldObservable, amountPropertyObservable, null, null);
+		
+		fieldHandlers.put(LineItem.AMOUNT_PROPERTY, new FieldStateHandler() {
+			public void propertyChanged(Object oldValue, Object newValue) {
+				amountField.setMoney((CurrencyAmount)newValue);
+			}
+
+			public void update() {
+				if (lineItem == null) {
+					amountField.setEnabled(false);
+					amountField.setMoney(null);
+				} else {
+					amountField.setEnabled(true);
+					amountField.setMoney((CurrencyAmount)lineItem.getAmount());
+				}
+			}
+		});
 	}
 
 	private void createExchangeRateLabel(Composite parent) {
@@ -361,25 +406,37 @@ public class LineItemView extends AbstractView {
 	
 	protected void createExchangeRateField(Composite parent) {
 		exchangeRateText = new Text(parent, SWT.BORDER);
-		exchangeRateText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));		
-		
-		IObservableValue exchangeRateTextObservable = SWTObservables.observeText(exchangeRateText, SWT.Modify);
-		IObservableValue exchangeRatePropertyObservable = observeLineItemProperty(LineItem.EXCHANGE_RATE_PROPERTY, new ObjectWithPropertiesObservableValue.PropertyGetterSetter() {
+		exchangeRateText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		exchangeRateText.addModifyListener(new ModifyListener() {
 
-			public Object getValue(Object source) {
-				return new Double(((LineItem)source).getExchangeRate());
-			}
-
-			public void setValue(Object source, Object value) {
-				((LineItem)source).setExchangeRate(((Double)value).doubleValue());
-			}
-			
-			public Object getType() {
-				return double.class;
-			}
-			
+			public void modifyText(ModifyEvent event) {
+				if (lineItem == null) return;
+				try {					
+					lineItem.setExchangeRate(exchangeRateFormat.parse(exchangeRateText.getText()).doubleValue());
+				} catch (ParseException e) {
+					// Eat exception
+				}
+			}			
 		});
-		bindingContext.bindValue(exchangeRateTextObservable, exchangeRatePropertyObservable, null, null);
+		fieldHandlers.put(LineItem.EXCHANGE_RATE_PROPERTY, new FieldStateHandler() {
+			public void propertyChanged(Object oldValue, Object newValue) {
+				setValue(((Number)newValue).doubleValue());
+			}
+
+			public void update() {
+				if (lineItem == null) {
+					exchangeRateText.setEnabled(false);
+					exchangeRateText.setText("");
+				} else {
+					exchangeRateText.setEnabled(true);
+					setValue(lineItem.getExchangeRate());
+				}
+			}
+
+			private void setValue(double exchangeRate) {
+				exchangeRateText.setText(exchangeRateFormat.format(exchangeRate));
+			}
+		});
 	}
 	
 	private void createCommentLabel(Composite parent) {
@@ -390,37 +447,44 @@ public class LineItemView extends AbstractView {
 	protected void createCommentField(Composite parent) {
 		commentText = new Text(parent, SWT.MULTI | SWT.BORDER);
 		commentText.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		
-		IObservableValue commentTextObservable = SWTObservables.observeText(commentText, SWT.Modify);
-		IObservableValue commentPropertyObservable = observeLineItemProperty(LineItem.COMMENT_PROPERTY, new ObjectWithPropertiesObservableValue.PropertyGetterSetter() {
-
-			public Object getValue(Object source) {
-				return ((LineItem)source).getComment();
+		commentText.addModifyListener(new ModifyListener() {
+			public void modifyText(ModifyEvent event) {
+				if (lineItem == null) return;
+				lineItem.setComment(commentText.getText());
+			}			
+		});		
+		fieldHandlers.put(LineItem.COMMENT_PROPERTY, new FieldStateHandler() {
+			public void propertyChanged(Object oldValue, Object newValue) {
+				setValue((String)newValue);
 			}
 
-			public void setValue(Object source, Object value) {
-				((LineItem)source).setComment((String)value);
+			public void update() {
+				if (lineItem == null) {
+					commentText.setEnabled(false);
+					commentText.setText("");
+				} else {
+					commentText.setEnabled(true);
+					setValue(lineItem.getComment());
+				}
 			}
-			
-			public Object getType() {
-				return String.class;
+
+			private void setValue(String comment) {
+				if (commentText.getText().equals(comment)) return;
+				commentText.setText(comment == null ? "" : comment);
 			}
-			
 		});
-		bindingContext.bindValue(commentTextObservable, commentPropertyObservable, null, null);
+	}
+	
+	void update() {
+		Iterator handlers = fieldHandlers.values().iterator();
+		while (handlers.hasNext()) {
+			FieldStateHandler handler = (FieldStateHandler)handlers.next();
+			handler.update();
+		}
 	}
 	
 	public void setFocus() {
 		dateField.setFocus();
-	}
-
-	/**
-	 * 
-	 * <p>This view doesn't use a viewer that
-	 * contributes any notion of selection.</p>
-	 */
-	protected Viewer getViewer() {
-		return null;
 	}
 
 	protected void handleSelection(ISelection selection) {
@@ -437,6 +501,20 @@ public class LineItemView extends AbstractView {
 	}
 
 	public void setLineItem(LineItem lineItem) {
-		this.lineItem.setValue(lineItem);
+		unhookListeners(this.lineItem);
+		hookListeners(lineItem);
+		this.lineItem = lineItem;
+		update();
+	}
+
+
+	void hookListeners(LineItem lineItem) {
+		if (lineItem == null) return;
+		lineItem.addPropertyChangeListener(propertyChangeListener);
+	}
+	
+	void unhookListeners(LineItem lineItem) {
+		if (lineItem == null) return;
+		lineItem.removePropertyChangeListener(propertyChangeListener);
 	}
 }
