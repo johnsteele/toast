@@ -1,12 +1,20 @@
+/*******************************************************************************
+ * Copyright (c) 2008 The Eclipse Foundation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *    The Eclipse Foundation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.examples.expenses.core;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
-import java.util.List;
-
-import org.junit.Before;
 import org.junit.Test;
-import org.osgi.service.event.Event;
 /**
  * This class provides a handful of tests for the {@link ExpenseBinder} class.
  * 
@@ -25,13 +33,10 @@ public class BinderTests extends ObjectWithPropertiesTests {
 	public void testAddExpenseReport() throws Exception {
 		ExpenseReport report = new ExpenseReport("Trip somewhere");
 		binder.addExpenseReport(report);
-		
-		Event event = eventQueue.take();
-		assertSame(binder, event.getProperty(ObjectWithProperties.SOURCE));
-		assertEquals(ExpensesBinder.REPORTS_PROPERTY, event.getProperty(ObjectWithProperties.PROPERTY_NAME));
-		assertSame(report, ((List<?>) event.getProperty(ObjectWithProperties.NEW_VALUE)).get(0));
-		assertSame(report, event.getProperty(ObjectWithProperties.OBJECT_ADDED));
-		assertNull(event.getProperty(ObjectWithProperties.OBJECT_REMOVED));
+
+		CollectionPropertyChangeEvent propertyChangeEvent = (CollectionPropertyChangeEvent)observerQueue.remove();
+		assertSame(binder, propertyChangeEvent.getSource());
+		assertEquals(report, propertyChangeEvent.added[0]);
 	}
 
 	@Test
@@ -39,32 +44,22 @@ public class BinderTests extends ObjectWithPropertiesTests {
 		ExpenseReport report = new ExpenseReport("Trip somewhere");
 		binder.addExpenseReport(report);
 		binder.removeExpenseReport(report);
+
+		/* Skip the first one */
+		CollectionPropertyChangeEvent propertyChangeEvent = (CollectionPropertyChangeEvent)observerQueue.remove();
 		
-		eventQueue.take(); // Ignore add
-		Event event = eventQueue.take(); 		
-		assertSame(binder, event.getProperty(ObjectWithProperties.SOURCE));
-		assertEquals(ExpensesBinder.REPORTS_PROPERTY, event.getProperty(ObjectWithProperties.PROPERTY_NAME));
-		assertSame(report, event.getProperty(ObjectWithProperties.OBJECT_REMOVED));
-		assertNull(event.getProperty(ObjectWithProperties.OBJECT_ADDED));
+		/* The second event contains the remove */
+		propertyChangeEvent = (CollectionPropertyChangeEvent)observerQueue.remove();
+		assertSame(binder, propertyChangeEvent.getSource());
+		assertEquals(report, propertyChangeEvent.removed[0]);
 	}
 
 	@Test
 	public void testRemoveMissingExpenseReport() throws Exception {
 		ExpenseReport report = new ExpenseReport("Trip somewhere");
-		
-		/*
-		 * Switch up the ordering of the remove and add. We expect
-		 * that there will be no event for the remove (since we are
-		 * attempting to remove something that hasn't yet been added), 
-		 * but that there will be one for the add.
-		 */
 		binder.removeExpenseReport(report);
-		binder.addExpenseReport(report);
 		
-		Event event = eventQueue.take();
-		assertSame(ObjectWithProperties.OBJECT_ADDED, event.getProperty(ObjectWithProperties.EVENT_TYPE));
-		assertSame(report, event.getProperty(ObjectWithProperties.OBJECT_ADDED));
-		assertNull(event.getProperty(ObjectWithProperties.OBJECT_REMOVED));
+		assertTrue(observerQueue.isEmpty());
 	}
 	
 	@Override

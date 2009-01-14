@@ -1,3 +1,13 @@
+/*******************************************************************************
+ * Copyright (c) 2008 The Eclipse Foundation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *    The Eclipse Foundation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.examples.expenses.core;
 
 import static org.junit.Assert.assertEquals;
@@ -7,7 +17,6 @@ import java.util.Date;
 
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.junit.Test;
-import org.osgi.service.event.Event;
 
 import com.ibm.icu.util.Currency;
 import com.ibm.icu.util.CurrencyAmount;
@@ -36,10 +45,6 @@ public class LineItemTests extends ObjectWithPropertiesTests {
 		PropertyChangeEvent propertyChangeEvent = observerQueue.remove();
 		assertSame(lineItem, propertyChangeEvent.getSource());
 		assertEquals(amount, propertyChangeEvent.getNewValue());
-		
-		Event event = eventQueue.take();
-		assertSame(lineItem, event.getProperty(ObjectWithProperties.SOURCE));
-		assertEquals(amount, event.getProperty(ObjectWithProperties.NEW_VALUE));
 	}
 
 	@Test
@@ -49,10 +54,6 @@ public class LineItemTests extends ObjectWithPropertiesTests {
 		PropertyChangeEvent propertyChangeEvent = observerQueue.remove();
 		assertSame(lineItem, propertyChangeEvent.getSource());
 		assertEquals("Comment", propertyChangeEvent.getNewValue());
-		
-		Event event = eventQueue.take();
-		assertSame(lineItem, event.getProperty(ObjectWithProperties.SOURCE));
-		assertEquals("Comment", event.getProperty(ObjectWithProperties.NEW_VALUE));
 	}
 
 	@Test
@@ -63,10 +64,6 @@ public class LineItemTests extends ObjectWithPropertiesTests {
 		PropertyChangeEvent propertyChangeEvent = observerQueue.remove();
 		assertSame(lineItem, propertyChangeEvent.getSource());
 		assertEquals(date, propertyChangeEvent.getNewValue());
-		
-		Event event = eventQueue.take();
-		assertSame(lineItem, event.getProperty(ObjectWithProperties.SOURCE));
-		assertEquals(date, event.getProperty(ObjectWithProperties.NEW_VALUE));
 	}
 
 	@Test
@@ -76,10 +73,6 @@ public class LineItemTests extends ObjectWithPropertiesTests {
 		PropertyChangeEvent propertyChangeEvent = observerQueue.remove();
 		assertSame(lineItem, propertyChangeEvent.getSource());
 		assertEquals(Double.valueOf(1.6), propertyChangeEvent.getNewValue());
-		
-		Event event = eventQueue.take();
-		assertSame(lineItem, event.getProperty(ObjectWithProperties.SOURCE));
-		assertEquals(Double.valueOf(1.6), event.getProperty(ObjectWithProperties.NEW_VALUE));
 	}
 	
 
@@ -91,10 +84,6 @@ public class LineItemTests extends ObjectWithPropertiesTests {
 		PropertyChangeEvent propertyChangeEvent = observerQueue.remove();
 		assertSame(lineItem, propertyChangeEvent.getSource());
 		assertSame(type, propertyChangeEvent.getNewValue());
-		
-		Event event = eventQueue.take();
-		assertSame(lineItem, event.getProperty(ObjectWithProperties.SOURCE));
-		assertSame(type, event.getProperty(ObjectWithProperties.NEW_VALUE));
 	}
 	
 	@Override

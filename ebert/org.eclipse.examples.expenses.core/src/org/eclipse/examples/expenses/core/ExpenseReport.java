@@ -13,7 +13,6 @@ package org.eclipse.examples.expenses.core;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * An ExpenseReport represents a collection of expenses made together, perhaps
@@ -81,18 +80,31 @@ public class ExpenseReport extends ObjectWithProperties implements Serializable 
 		return title;
 	}
 
-	public void addLineItem(LineItem lineItem) {
+	/**
+	 * This method adds a {@link LineItem} to the receiver.
+	 * <p>
+	 * Note that this method is synchronized so that clients can lock on the
+	 * receiver and be assured that no line items will be added by other 
+	 * threads as long as they hold that lock.
+	 * 
+	 * @param lineItem an instance of {@link LineItem}. Must not be <code>null</code>.
+	 */
+	public synchronized void addLineItem(LineItem lineItem) {
 		lineItems.add(lineItem);
-
-		Properties properties = new Properties();
-		properties.put(OBJECT_ADDED, lineItem);
-		
-		fireCollectionEvent(LINEITEMS_PROPERTY, lineItems, OBJECT_ADDED, lineItem);
+		fireCollectionAddEvent(LINEITEMS_PROPERTY, lineItems, lineItem);
 	}
 	
-	public void removeLineItem(LineItem lineItem) {
-		lineItems.remove(lineItem);
-		
-		fireCollectionEvent(LINEITEMS_PROPERTY, lineItems, OBJECT_REMOVED, lineItem);
+	/**
+	 * This method removes a {@link LineItem} from the receiver.
+	 * <p>
+	 * Note that this method is synchronized so that clients can lock on the
+	 * receiver and be assured that no line items will be removed by other 
+	 * threads as long as they hold that lock.
+	 * 
+	 * @param lineItem an instance of {@link LineItem}. Must not be <code>null</code>.
+	 */
+	public synchronized void removeLineItem(LineItem lineItem) {
+		lineItems.remove(lineItem);		
+		fireCollectionRemoveEvent(LINEITEMS_PROPERTY, lineItems, lineItem);
 	}	
 }

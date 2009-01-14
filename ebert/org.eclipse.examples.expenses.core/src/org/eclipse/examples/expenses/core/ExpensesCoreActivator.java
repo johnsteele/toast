@@ -19,47 +19,16 @@ import java.io.ObjectOutputStream;
 
 import org.eclipse.core.runtime.Plugin;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
-import org.osgi.service.event.EventAdmin;
-import org.osgi.util.tracker.ServiceTracker;
 
 public class ExpensesCoreActivator extends Plugin {
 	static ExpensesCoreActivator instance;
-	EventAdmin eventAdmin;
-	private ServiceTracker tracker;
 
 	public void start(BundleContext context) throws Exception {
 		super.start(context);
 		instance = this;
+	}
 		
-		startEventAdminServiceTracker(context);
-	}
-	
-	/**
-	 * Start a service tracker to keep track of instances of the
-	 * {@link EventAdmin} service. The EventAdmin service is used in the
-	 * {@link ObjectWithProperties} abstract class to notify subscribers of
-	 * changes to the domain objects. Note that, with Bug 259398, we are
-	 * considering removing this support since it adds complexity that is not
-	 * especially germane to the example.
-	 */
-	 void startEventAdminServiceTracker(BundleContext context) {		
-		tracker = new ServiceTracker(context,EventAdmin.class.getName(), null) {
-			public Object addingService(ServiceReference reference) {
-				Object service = super.addingService(reference);
-				eventAdmin = (EventAdmin)service;
-				return service;
-			}
-			public void removedService(ServiceReference reference, Object service) {
-				eventAdmin = null;
-				super.removedService(reference, service);
-			}
-		};
-		tracker.open();
-	}
-	
 	public void stop(BundleContext context) throws Exception {
-		tracker.close();
 		instance = null;
 		super.stop(context);
 	}
@@ -124,9 +93,5 @@ public class ExpensesCoreActivator extends Plugin {
 
 	public static ExpensesCoreActivator getDefault() {
 		return instance;
-	}
-
-	public EventAdmin getEventAdmin() {
-		return eventAdmin;
 	}
 }

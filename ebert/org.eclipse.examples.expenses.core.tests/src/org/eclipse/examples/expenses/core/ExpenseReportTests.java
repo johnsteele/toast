@@ -1,7 +1,16 @@
+/*******************************************************************************
+ * Copyright (c) 2008 The Eclipse Foundation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *    The Eclipse Foundation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.examples.expenses.core;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -9,7 +18,6 @@ import java.util.List;
 
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.junit.Test;
-import org.osgi.service.event.Event;
 
 /**
  * This class provides a handful of tests for the {@link ExpenseReport} class.
@@ -34,11 +42,6 @@ public class ExpenseReportTests extends ObjectWithPropertiesTests {
 		assertSame(expenseReport, propertyChangeEvent.getSource());
 		assertEquals("Expenses", propertyChangeEvent.getOldValue());
 		assertEquals("Wayne's Expenses", propertyChangeEvent.getNewValue());
-		
-		Event event = eventQueue.take();
-		assertSame(expenseReport, event.getProperty(ObjectWithProperties.SOURCE));
-		assertSame("Expenses", event.getProperty(ObjectWithProperties.OLD_VALUE));
-		assertSame("Wayne's Expenses", event.getProperty(ObjectWithProperties.NEW_VALUE));
 	}
 
 	@Test
@@ -49,12 +52,6 @@ public class ExpenseReportTests extends ObjectWithPropertiesTests {
 		PropertyChangeEvent propertyChangeEvent = observerQueue.remove();
 		assertSame(expenseReport, propertyChangeEvent.getSource());
 		assertSame(lineItem, ((List<?>)propertyChangeEvent.getNewValue()).get(0));
-
-		Event event = eventQueue.take();
-		assertSame(expenseReport, event.getProperty(ObjectWithProperties.SOURCE));
-		assertSame(lineItem, ((List<?>) event.getProperty(ObjectWithProperties.NEW_VALUE)).get(0));
-		assertSame(lineItem, event.getProperty(ObjectWithProperties.OBJECT_ADDED));
-		assertNull(event.getProperty(ObjectWithProperties.OBJECT_REMOVED));
 	}
 
 	@Test
@@ -67,13 +64,6 @@ public class ExpenseReportTests extends ObjectWithPropertiesTests {
 		PropertyChangeEvent propertyChangeEvent = observerQueue.remove();
 		assertSame(expenseReport, propertyChangeEvent.getSource());
 		assertTrue(((List<?>)propertyChangeEvent.getNewValue()).isEmpty());
-		
-		eventQueue.take(); // Ignore the first one
-		Event event = eventQueue.take();
-		assertSame(expenseReport, event.getProperty(ObjectWithProperties.SOURCE));
-		assertTrue(((List<?>) event.getProperty(ObjectWithProperties.NEW_VALUE)).isEmpty());
-		assertSame(lineItem, event.getProperty(ObjectWithProperties.OBJECT_REMOVED));
-		assertNull(event.getProperty(ObjectWithProperties.OBJECT_ADDED));
 	}
 
 	@Override

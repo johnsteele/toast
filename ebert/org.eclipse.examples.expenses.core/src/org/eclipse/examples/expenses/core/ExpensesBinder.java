@@ -72,15 +72,15 @@ public class ExpensesBinder extends ObjectWithProperties implements Serializable
 		return (ExpenseReport[]) reports.toArray(new ExpenseReport[reports.size()]) ;
 	}
 
-	public void addExpenseReport(ExpenseReport report) {
+	public synchronized void addExpenseReport(ExpenseReport report) {
 		reports.add(report);
 		
-		fireCollectionEvent(REPORTS_PROPERTY, reports, OBJECT_ADDED, report);
+		fireCollectionAddEvent(REPORTS_PROPERTY, reports, report);
 	}
 
-	public void removeExpenseReport(ExpenseReport report) {
+	public synchronized void removeExpenseReport(ExpenseReport report) {
 		if (!reports.remove(report)) return;
 		
-		fireCollectionEvent(REPORTS_PROPERTY, reports, OBJECT_REMOVED, report);
+		fireCollectionRemoveEvent(REPORTS_PROPERTY, reports, report);
 	}
 }
