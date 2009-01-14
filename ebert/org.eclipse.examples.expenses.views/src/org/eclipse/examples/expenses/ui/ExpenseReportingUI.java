@@ -11,7 +11,7 @@
 package org.eclipse.examples.expenses.ui;
 
 import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
-import org.osgi.framework.BundleActivator;
+import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
 /**
@@ -28,9 +28,10 @@ import org.osgi.framework.BundleContext;
  * version is aware of the multiple-user nature of the environment and reacts
  * accordingly. This implementation will be revisited with Bug 259516.
  */
-public class ExpenseReportingUI implements BundleActivator {
+public class ExpenseReportingUI extends AbstractUIPlugin {
+	public static final String PLUGIN_ID = "org.eclipse.examples.expenses.views";
+	
 	static ExpenseReportingUI instance;
-	private BundleContext context;
 	private ExpenseReportingViewModel expenseReportingViewModel;
 
 	public ExpenseReportingUI() {
@@ -42,20 +43,14 @@ public class ExpenseReportingUI implements BundleActivator {
 	}
 	
 	public void start(BundleContext context) throws Exception {
-		this.context = context;
 		expenseReportingViewModel = new ExpenseReportingViewModel();
 	}
 
 	public void stop(BundleContext context) throws Exception {
 		expenseReportingViewModel.dispose();
 		expenseReportingViewModel = null;
-		context = null;
 	}
 	
-	public BundleContext getContext() {
-		return context;
-	}
-
 	public ExpenseReportingViewModel getExpenseReportingViewModel() {
 		return expenseReportingViewModel;
 	}

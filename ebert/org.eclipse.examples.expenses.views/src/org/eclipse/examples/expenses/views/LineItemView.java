@@ -17,16 +17,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.eclipse.core.databinding.DataBindingContext;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.ui.fields.currency.IMoneyChangeListener;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyChangeEvent;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyField;
-import org.eclipse.examples.expenses.views.databinding.DateFieldObserverableValue;
-import org.eclipse.examples.expenses.views.databinding.MoneyFieldObserverableValue;
-import org.eclipse.examples.expenses.views.databinding.ObjectWithPropertiesObservableValue;
 import org.eclipse.examples.expenses.widgets.datefield.DateField;
 import org.eclipse.examples.expenses.widgets.datefield.common.DateChangeEvent;
 import org.eclipse.examples.expenses.widgets.datefield.common.IDateChangeListener;
@@ -63,23 +59,6 @@ import com.ibm.icu.util.CurrencyAmount;
  * Two custom widgets are used by this part: the {@link MoneyField} widget
  * displays and creates instances of {@link CurrencyAmount}; the
  * {@link DateField} widget displays and selects instances of {@link Date}.
- * <p>
- * The implementation uses the JFace DataBinding APIs to provide a two-way
- * binding between the domain model and the user interface components. In order
- * to leverage JFace DataBinding, some custom code is required to make
- * connections with the custom widgets used. There is no built in support for
- * the {@link MoneyField} custom widget, for example, so the
- * {@link MoneyFieldObserverableValue} class was created to provide this
- * support. For similar reasons, the {@link DateFieldObserverableValue} class
- * was created. The other fields use standard mechanisms to provide the binding.
- * <p>
- * JFace DataBinding provides built-in support for JavaBeans. Unfortunately, our
- * domain model is not built using standard JavaBeans owing to the fact that
- * JavaBeans are not included as part of the Foundation 1.1 libraries we conform
- * to in order to support environments like eRCP. Our implementation instead
- * provides custom listeners using {@link IPropertyChangeListener} interface.
- * The {@link ObjectWithPropertiesObservableValue} class was created to
- * accomodate these &quot;custom JavaBeans&quot;.
  * 
  * @see ViewPart
  * @see ObjectWithPropertiesObservableValue
@@ -192,6 +171,9 @@ public class LineItemView extends AbstractView {
 		public abstract void update();
 	}
 	
+	/**
+	 * @see FieldStateHandler
+	 */
 	Map fieldHandlers = new HashMap();
 	
 	private IPropertyChangeListener propertyChangeListener = new IPropertyChangeListener() {

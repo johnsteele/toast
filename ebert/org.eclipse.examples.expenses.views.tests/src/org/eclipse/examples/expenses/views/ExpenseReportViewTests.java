@@ -13,8 +13,8 @@ package org.eclipse.examples.expenses.views;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
@@ -23,10 +23,6 @@ import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
 import org.junit.Before;
 import org.junit.Test;
-import org.osgi.framework.BundleContext;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
-import org.osgi.service.event.EventHandler;
 
 import com.ibm.icu.text.DateFormat;
 import com.ibm.icu.util.Currency;
@@ -42,17 +38,7 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 	public void setup() throws Exception {
 		view = (ExpenseReportView) getActivePage().showView(ExpenseReportView.ID);
 		
-		/*
-		 * Here, we create a subclass of ExpenseReport that changes the way that
-		 * the EventAdmin service is notified of a change event. See the
-		 * comments on the #testTitleFieldUpdated method for more information.
-		 */
-		report = new ExpenseReport("My Expense Report") {
-			@Override
-			protected void postEvent(EventAdmin eventAdmin, Event event) {
-				eventAdmin.sendEvent(event);
-			}
-		};
+		report = new ExpenseReport("My Expense Report");
 		lineItemWithType = new LineItem();
 		lineItemWithType.setType(new ExpenseType("Air fare", 1));
 		lineItemWithType.setAmount(new CurrencyAmount(10.0, Currency.getInstance("CAD")));
@@ -64,6 +50,77 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 		view.setReport(report);
 		
 		processEvents();
+	}
+	
+	/**
+	 * The view installs listeners on the {@link ExpenseReport} and 
+	 * any {@link LineItem} instances contained in it. With this test,
+	 * we confirm that those listeners have been properly installed.
+	 * 
+	 * @see ExpenseReportView#expenseReportPropertyChangeListener
+	 * @see ExpenseReportView#lineItemPropertyChangeListener
+	 * @see ExpenseReportView#hookPropertyChangeListener(ExpenseReport)
+	 * @see ExpenseReportView#hookPropertyChangeListener(LineItem)
+	 */
+	@Test
+	public void testListenersInstalled() {
+		assertSame(view.expenseReportPropertyChangeListener, report.getPropertyChangeListeners()[0]);
+		assertSame(view.lineItemPropertyChangeListener, lineItemWithType.getPropertyChangeListeners()[0]);
+		assertSame(view.lineItemPropertyChangeListener, lineItemWithoutType.getPropertyChangeListeners()[0]);
+	}
+	
+	/**
+	 * Confirm that the listeners are uninstalled when the {@link ExpenseReport}
+	 * is changed.
+	 * 
+	 * @see #testListenersInstalled()
+	 * @see ExpenseReportView#unhookPropertyChangeListener(ExpenseReport)
+	 * @see ExpenseReportView#unhookPropertyChangeListener(LineItem)
+	 */
+	@Test
+	public void testListenersUninstalled() {
+		view.setReport(null);
+		
+		processEvents();
+		
+		assertEquals(0, report.getPropertyChangeListeners().length);
+		assertEquals(0, lineItemWithType.getPropertyChangeListeners().length);
+		assertEquals(0, lineItemWithoutType.getPropertyChangeListeners().length);
+	}
+	
+	/**
+	 * This test confirms that any {@link LineItem} instances added
+	 * to the report get a listener installed on them.
+	 * 
+	 * @see #testListenersInstalled()
+	 * @see ExpenseReportView#expenseReportPropertyChangeListener
+	 * @see ExpenseReportView#hookPropertyChangeListener(LineItem)
+	 */
+	@Test
+	public void testListenersInstalledOnAddedLineItems() throws Exception {
+		LineItem anotherLineItem = new LineItem();
+		report.addLineItem(anotherLineItem);
+		
+		processEvents();
+		
+		assertSame(view.lineItemPropertyChangeListener, anotherLineItem.getPropertyChangeListeners()[0]);
+	}
+	
+	/**
+	 * This test confirms that any {@link LineItem} instances removed
+	 * from the report have the listener removed from them.
+	 * 
+	 * @see #testListenersInstalled()
+	 * @see ExpenseReportView#expenseReportPropertyChangeListener
+	 * @see ExpenseReportView#unhookPropertyChangeListener(LineItem)
+	 */
+	@Test
+	public void testListenersInstalledFromRemovedLineItems() throws Exception {
+		report.removeLineItem(lineItemWithoutType);
+		
+		processEvents();
+		
+		assertEquals(0, lineItemWithoutType.getPropertyChangeListeners().length);
 	}
 	
 	/**
@@ -181,116 +238,7 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 		
 		assertFalse(view.labelProvider.isLabelProperty(lineItemWithType, LineItem.EXCHANGE_RATE_PROPERTY));
 	}
-		
-	/**
-	 * This test confirms that the service that listens for changes to a
-	 * {@link LineItem} has been started. This service should have been started
-	 * as part of the process of creating the view.
-	 * 
-	 * @see ExpenseReportView#lineItemChangedHandlerService
-	 * @see ExpenseReportView#startLineItemChangedHandlerService(BundleContext)
-	 */
-	@Test
-	public void testLineItemChangedHandlerServiceStarted() {
-		// If the service has not been registered, this should throw an exception.
-		view.lineItemChangedHandlerService.getReference();		
-	}
-	
-	/**
-	 * This test confirms that the service that listens for changes to {@link LineItem}
-	 * instances is shut down when the instance is disposed.
-	 * 
-	 * @see ExpenseReportView#lineItemChangedHandlerService
-	 * @see ExpenseReportView#dispose()
-	 */
-	@Test
-	public void testLineItemChangedHandlerServiceStopped() {
-		getActivePage().hideView(view);
-		try {
-			view.lineItemChangedHandlerService.getReference();
-			fail("Service is still registered.");
-		} catch (IllegalStateException e) {
-			/*
-			 * If the service has been unregistered as we expect, then
-			 * an IllegalStateException will be thrown. This is expected
-			 * behaviour.
-			 */
-		}
-	}
-	
-	/**
-	 * This method confirms that the {@link ExpenseReportView#lineItemAddedHandlerService}
-	 * service has been started.
-	 * 
-	 * @see ExpenseReportView#lineItemAddedHandlerService
-	 * @see ExpenseReportView#startLineItemAddedHandlerService(BundleContext)
-	 * @throws Exception
-	 */
-	@Test
-	public void testLineItemAddedHandlerServiceStarted() throws Exception {
-		// If the service has not been registered, this should throw an exception.
-		view.lineItemAddedHandlerService.getReference();		
-	}
-	
-	/**
-	 * This method confirms that the {@link ExpenseReportView#lineItemAddedHandlerService}
-	 * service has been stopped.
-	 * 
-	 * @see ExpenseReportView#lineItemAddedHandlerService
-	 * @see ExpenseReportView#startLineItemAddedHandlerService(BundleContext)
-	 * @see ExpenseReportView#dispose()
-	 */
-	@Test
-	public void testLineItemAddedHandlerServiceStopped() {
-		getActivePage().hideView(view);
-		try {
-			view.lineItemAddedHandlerService.getReference();
-			fail("Service is still registered.");
-		} catch (IllegalStateException e) {
-			/*
-			 * If the service has been unregistered as we expect, then
-			 * an IllegalStateException will be thrown. This is expected
-			 * behaviour.
-			 */
-		}
-	}
-	
-	/**
-	 * This method confirms that the {@link ExpenseReportView#lineItemRemovedHandlerService}
-	 * service has been started.
-	 * 
-	 * @see ExpenseReportView#lineItemRemovedHandlerService
-	 * @see ExpenseReportView#startLineItemRemovedHandlerService(BundleContext)
-	 */
-	@Test
-	public void testLineItemRemovedHandlerServiceStarted() {
-		// If the service has not been registered, this should throw an exception.
-		view.lineItemRemovedHandlerService.getReference();		
-	}
-	
-	/**
-	 * This method confirms that the {@link ExpenseReportView#lineItemRemovedHandlerService}
-	 * service has been stopped.
-	 * 
-	 * @see ExpenseReportView#lineItemRemovedHandlerService
-	 * @see ExpenseReportView#startLineItemRemovedHandlerService(BundleContext)
-	 * @see ExpenseReportView#dispose()
-	 */
-	@Test
-	public void testLineItemRemovedHandlerServiceStopped() throws Exception {
-		getActivePage().hideView(view);
-		try {
-			view.lineItemRemovedHandlerService.getReference();
-			fail("Service is still registered.");
-		} catch (IllegalStateException e) {
-			/*
-			 * If the service has been unregistered as we expect, then
-			 * an IllegalStateException will be thrown. This is expected
-			 * behaviour.
-			 */
-		}
-	}
-	
+					
 	/**
 	 * This method tests that the &quot;Remove&quot; button is properly updated
 	 * in response to a change in selection in the
@@ -322,31 +270,7 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 	/**
 	 * This test confirms that the {@link ExpenseReportView#titleText} field is
 	 * appropriately updated when the title property changes in the
-	 * {@link ExpenseReport}. Note that this test works with the complete event
-	 * lifecycle: The change in the report queues a change {@link Event} on the
-	 * {@link EventAdmin} service which is picked up by the handler installed in
-	 * the
-	 * {@link ExpenseReportView#startExpenseReportChangedHandlerService(BundleContext)}
-	 * method; That method then effects the update via the
-	 * {@link ExpenseReportView#handleExpenseReportPropertyChangedEvent(Event)}
-	 * method.
-	 * 
-	 * <p>
-	 * By default, the expense report enqueues an event asynchronously. This
-	 * creates a condition that is difficult to test without messing around with
-	 * threads. Since our intent is to test how the ExpenseReportView handles
-	 * updates, and not to test the EventAdmin service ability to deliver events
-	 * asynchronously, the {@link ExpenseReport} under observation has been
-	 * changed to deliver events synchronously (see comments in the
-	 * initialization of the {@link #report} field in the {@link #setup()}
-	 * method.
-	 * 
-	 * <p>
-	 * It could probably be argued that we don't need to involve the EventAdmin
-	 * service at all since it's not what we need to test. We could, for
-	 * example, just invoke the
-	 * {@link ExpenseReportView#handleExpenseReportPropertyChangedEvent(Event)}
-	 * method directly and still have a perfectly valid test.
+	 * {@link ExpenseReport}. 
 	 * 
 	 * @throws Exception
 	 */
@@ -357,25 +281,5 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 		processEvents();
 		
 		assertEquals("New Title", view.titleText.getText());
-	}
-	
-	/**
-	 * The {@link EventHandler} registered by in the
-	 * {@link ExpenseReportView#startExpenseReportChangedHandlerService(BundleContext)}
-	 * method will receive update events for changes to all
-	 * {@link ExpenseReport}s. We need to make sure that
-	 * {@link ExpenseReportView#titleText} is only updated when the report under
-	 * observation changes.
-	 * 
-	 * @throws Exception
-	 */
-	@Test
-	public void testTitleFieldUpdatedInADifferentInstance() throws Exception {
-		ExpenseReport newReport = new ExpenseReport("Some other Expense Report");
-		newReport.setTitle("New Title");
-		
-		processEvents();
-		
-		assertEquals("My Expense Report", view.titleText.getText());
 	}
 }

@@ -11,16 +11,18 @@
 package org.eclipse.examples.expenses.views;
 
 import java.util.Date;
-import java.util.Properties;
 
+import org.eclipse.core.runtime.Status;
+import org.eclipse.examples.expenses.core.CollectionPropertyChangeEvent;
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
-import org.eclipse.examples.expenses.core.ObjectWithProperties;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
 import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
 import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModelListener;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -46,12 +48,6 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.ISelectionService;
 import org.eclipse.ui.IWorkbenchPartSite;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
-import org.osgi.service.event.EventConstants;
-import org.osgi.service.event.EventHandler;
 
 import com.ibm.icu.text.DateFormat;
 import com.ibm.icu.text.NumberFormat;
@@ -66,21 +62,6 @@ import com.ibm.icu.text.NumberFormat;
  * library, and the subset of Eclipse Platform APIs common to RCP, RAP, and
  * eRCP. A customization hook is provided so that the view can be extended to
  * exploit features that are available on specific platforms.
- * <p>
- * An interesting feature of this view is that it uses the OSGi Event Service to
- * keep itself up-to-date. When an instance is created, it registers an
- * {@link EventHandler} service that is notified of any changes to the
- * underlying objects. The event service is essentially a queue (similar to JMS)
- * that delivers events on a topic. Instances of this view listen to events that
- * are put on the {@value ObjectWithProperties#PROPERTY_CHANGE_TOPIC} topic and
- * update themselves accordingly.
- * <p>
- * Use of the event service works quite well for RCP and eRCP since the number
- * of objects that we are concerned with is quite small. In a RAP-based
- * application, the number of objects is potentially huge (owing to the fact
- * that the application will potentially be serving hundreds or thousands of
- * clients) which could make the use of the event service for this sort of
- * notification prohibitively expensive.
  */
 public class ExpenseReportView extends AbstractView {
 
@@ -124,6 +105,8 @@ public class ExpenseReportView extends AbstractView {
 		}
 
 		public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
+			unhookPropertyChangeListener((ExpenseReport)oldInput);
+			hookPropertyChangeListener((ExpenseReport)newInput);
 		}
 	};	
 
@@ -273,56 +256,6 @@ public class ExpenseReportView extends AbstractView {
 		}
 	};
 	
-	/**
-	 * This field holds the {@link ServiceRegistration} object for the
-	 * {@link EventHandler} service that listens for changes to the basic
-	 * properties of an {@link ExpenseReport}. This object is used to keep track
-	 * of the service that we've registered and provide us with a convenient
-	 * mechanism for unregistering the service when we're done.
-	 * 
-	 * @see #startExpenseReportChangedHandlerService(BundleContext)
-	 * @see #dispose()
-	 */
-	ServiceRegistration expenseReportChangedEventHandlerService;
-	
-	/**
-	 * This field holds the {@link ServiceRegistration} object for the
-	 * {@link EventHandler} service that listens for additions to the
-	 * {@link LineItem}s tracked by an {@link ExpenseReport}. This object is
-	 * used to keep track of the service that we've registered and provide us
-	 * with a convenient mechanism for unregistering the service when we're
-	 * done.
-	 * 
-	 * @see #startLineItemAddedHandlerService(BundleContext)
-	 * @see #dispose()
-	 */
-	ServiceRegistration lineItemAddedHandlerService;
-
-	/**
-	 * This field holds the {@link ServiceRegistration} object for the
-	 * {@link EventHandler} service that listens for removals from the
-	 * {@link LineItem}s tracked by an {@link ExpenseReport}. This object is
-	 * used to keep track of the service that we've registered and provide us
-	 * with a convenient mechanism for unregistering the service when we're
-	 * done.
-	 * 
-	 * @see #startLineItemRemovedHandlerService(BundleContext)
-	 * @see #dispose()
-	 */
-	ServiceRegistration lineItemRemovedHandlerService;
-	
-	/**
-	 * This field holds the {@link ServiceRegistration} object for the
-	 * {@link EventHandler} service that listens for changes to the basic
-	 * properties of a {@link LineItem}. This object is used to keep track of
-	 * the service that we've registered and provide us with a convenient
-	 * mechanism for unregistering the service when we're done.
-	 * 
-	 * @see #startLineItemChangedHandlerService(BundleContext)
-	 * @see #dispose()
-	 */
-	ServiceRegistration lineItemChangedHandlerService;
-	private Button addButton;
 	private Composite titleArea;
 			
 
@@ -357,11 +290,140 @@ public class ExpenseReportView extends AbstractView {
 		getExpenseReportingViewModel().addListener(expenseReportingUIModelListener);
 		setReport(getExpenseReportingViewModel().getReport());
 		
-		startEventHandlers();
-
 		updateRemoveButton();
 	}
 
+
+	IPropertyChangeListener expenseReportPropertyChangeListener = new IPropertyChangeListener() {
+		public void propertyChange(PropertyChangeEvent event) {
+			if (event.getSource() != expenseReport) {
+				/*
+				 * This check has been included to confirm that we don't have a leak
+				 * The only ExpenseReport that we should be getting notifications
+				 * from is the one that we're referencing.
+				 */
+				ExpenseReportingUI.getDefault().getLog().log(new Status(Status.ERROR, ExpenseReportingUI.PLUGIN_ID, "Unexpected ExpenseReport providing notification to ExpenseReportView."));
+			}
+			if (ExpenseReport.TITLE_PROPERTY.equals(event.getProperty())) {
+				handleTitlePropertyChanged(event);
+			} else if (ExpenseReport.LINEITEMS_PROPERTY.equals(event.getProperty())) {
+				if (event instanceof CollectionPropertyChangeEvent) {
+					handleLineItemsAddedOrRemoved((CollectionPropertyChangeEvent)event);
+				}
+			}
+		}
+
+		
+	};
+	
+	IPropertyChangeListener lineItemPropertyChangeListener = new IPropertyChangeListener() {
+		public void propertyChange(PropertyChangeEvent event) {
+			lineItemTableViewer.update(event.getSource(), new String[] {event.getProperty()});
+		}
+	};
+	
+	/**
+	 * This method adds {@link IPropertyChangeListener}s to an
+	 * {@link ExpenseReport} instance and any {@link LineItem}s it contains.
+	 * These listeners will inform the receiver of changes to their properties,
+	 * so that the view can be updated. A change, for example to a LineItem's
+	 * {@link LineItem#DATE_PROPERTY} would require that we update the
+	 * corresponding entry in the table.
+	 * <p>
+	 * This method synchronizes on the ExpenseReport because there is some
+	 * potential that LineItem instances can be added and removed by a different
+	 * thread while we are adding our listeners.
+	 * 
+	 * @param report an instance of {@link ExpenseReport} or <code>null</code>.
+	 */
+	protected void hookPropertyChangeListener(ExpenseReport report) {
+		if (report == null) return;
+		
+		synchronized (report) {
+			report.addPropertyChangeListener(expenseReportPropertyChangeListener);
+			LineItem[] items = report.getLineItems();
+			for(int index=0;index<items.length;index++) {
+				hookPropertyChangeListener(items[index]);
+			}
+		}
+	}
+
+	protected void hookPropertyChangeListener(LineItem item) {
+		item.addPropertyChangeListener(lineItemPropertyChangeListener);
+	}
+
+	/**
+	 * This method removes any listeners that have been previously installed
+	 * on the {@link ExpenseReport} instance and all {@link LineItem} instances
+	 * it contains.
+	 * 
+	 * @see #hookPropertyChangeListener(ExpenseReport)
+	 * 
+	 * @param report an instance of {@link ExpenseReport} or <code>null</code>.
+	 */
+	protected void unhookPropertyChangeListener(ExpenseReport report) {
+		if (report == null) return;
+		
+		synchronized (report) {
+			report.removePropertyChangeListener(expenseReportPropertyChangeListener);
+			LineItem[] items = report.getLineItems();
+			for(int index=0;index<items.length;index++) {
+				unhookPropertyChangeListener(items[index]);
+			}
+		}
+	}
+
+	protected void unhookPropertyChangeListener(LineItem item) {
+		item.removePropertyChangeListener(lineItemPropertyChangeListener);
+	}
+	
+
+	/**
+	 * {@link LineItem} instances have either been added to or removed from the
+	 * {@link ExpenseReport}. In response, we add listeners to the affected LineItem
+	 * instances and then update the table. We use the {@link #syncExec(Runnable)} method to ensure
+	 * that the update occurs in the UI thread as required.
+	 * 
+	 * @param event an instance of {@link CollectionPropertyChangeEvent}. Must not be <code>null</code>.
+	 */
+	private void handleLineItemsAddedOrRemoved(final CollectionPropertyChangeEvent event) {
+		for(int index=0;index<event.added.length;index++) {
+			hookPropertyChangeListener((LineItem)event.added[index]);
+		}
+		for(int index=0;index<event.removed.length;index++) {
+			unhookPropertyChangeListener((LineItem)event.removed[index]);
+		}
+		syncExec(new Runnable() {
+			public void run() {
+				lineItemTableViewer.add(event.added);
+				lineItemTableViewer.remove(event.removed);
+			}
+			
+		});
+	}
+
+	/**
+	 * The {@link ExpenseReport#TITLE_PROPERTY} has changed and the corresponding field
+	 * needs to be updated. We use the {@link #syncExec(Runnable)} method to ensure
+	 * that the update occurs in the UI thread as required.
+	 * 
+	 * @param event an instance of {@link PropertyChangeEvent}. Must not be <code>null</code>.
+	 */
+	protected void handleTitlePropertyChanged(final PropertyChangeEvent event) {
+		syncExec(new Runnable() {
+			public void run() {
+				/*
+				 * We check to make sure that the value currently held by the
+				 * text field is not the same as the value we're trying to assign into
+				 * it. This avoids triggering any unnecessary events and prevents
+				 * us from starting/continuing a notification loop.
+				 */
+				if (titleText.getText().equals(event.getNewValue())) return;
+				titleText.setText((String)event.getNewValue());
+			}			
+		});
+	}
+	
 	private ExpenseReportingViewModel getExpenseReportingViewModel() {
 		return ExpenseReportingUI.getDefault().getExpenseReportingViewModel();
 	}
@@ -527,138 +589,7 @@ public class ExpenseReportView extends AbstractView {
 		return dateFormat;
 	}
 
-	/**
-	 * This method starts the various services that handle events
-	 * generated by the domain model objects.
-	 */
-	void startEventHandlers() {
-		BundleContext context = ExpenseReportingUI.getDefault().getContext();
-		startExpenseReportChangedHandlerService(context);
-		startLineItemAddedHandlerService(context);
-		startLineItemRemovedHandlerService(context);
-		startLineItemChangedHandlerService(context);
-	}
-	
-	/**
-	 * This method starts an {@link EventHandler} service that listens for
-	 * property changes to {@link LineItem} instances. This event handler
-	 * is used by the OSGi {@link EventAdmin} service to handle matching
-	 * events as they occur. All subclasses of {@link ObjectWithProperties}
-	 * dispatch events through the {@link EventAdmin} service.
-	 * 
-	 * <p>
-	 * This service listens on the
-	 * {@link ObjectWithProperties#PROPERTY_CHANGE_TOPIC} topic, with an
-	 * inclusion filter (via the {@link EventConstants#EVENT_FILTER} property)
-	 * that only accepts events where the
-	 * {@link ObjectWithProperties#SOURCE_TYPE} is {@link LineItem}.
-	 * 
-	 * @see ObjectWithProperties#postEvent(String, Object, Object)
-	 * @param context
-	 *            an instance of BundleContext to use to register the
-	 *            EventListener.
-	 */
-	void startLineItemChangedHandlerService(BundleContext context) {
-		/*
-		 * Create the event handler. This is the object that will
-		 * be notified when a matching event is delivered to the
-		 * event service.
-		 */
-		EventHandler handler = new EventHandler() {
-			public void handleEvent(Event event) {
-				final Object source = event.getProperty(ObjectWithProperties.SOURCE);
-				final String property = (String)event.getProperty(ObjectWithProperties.PROPERTY_NAME);
-				/*
-				 * The view must be updated from within the UI thread, so
-				 * use an asyncExec block to do the actual update.
-				 */
-				asyncExec(new Runnable() {
-					public void run() {
-						lineItemTableViewer.update(source, new String[] {property});
-					}
-				});
-				
-			}			
-		};
-		
-		Properties properties = new Properties();
-		properties.put(EventConstants.EVENT_TOPIC, ObjectWithProperties.PROPERTY_CHANGE_TOPIC);
-		properties.put(EventConstants.EVENT_FILTER, "(" + ObjectWithProperties.SOURCE_TYPE + "=" + LineItem.class.getName() +")");
-		
-		lineItemChangedHandlerService = context.registerService(EventHandler.class.getName(), handler, properties);
-	}
-	
-	/**
-	 * This method starts the {@link #lineItemAddedHandlerService} service. This service
-	 * is notified (via the {@link EventHandler#handleEvent(Event)} method) whenever
-	 * a {@link LineItem} instance is added to an {@link ExpenseReport}.
-	 * 
-	 * @see #lineItemAddedHandlerService
-	 * @param context
-	 */
-	void startLineItemAddedHandlerService(BundleContext context) {
-		EventHandler handler = new EventHandler() {
-			public void handleEvent(final Event event) {
-				if (event.getProperty(ObjectWithProperties.SOURCE) != expenseReport) return;
-				asyncExec(new Runnable() {
-					public void run() {
-						lineItemTableViewer.add(event.getProperty(ObjectWithProperties.OBJECT_ADDED));
-					}
-				});
-			}			
-		};
-		Properties properties = new Properties();
-		properties.put(EventConstants.EVENT_TOPIC, ObjectWithProperties.PROPERTY_CHANGE_TOPIC);
-		properties.put(EventConstants.EVENT_FILTER, "(&(" + ObjectWithProperties.SOURCE_TYPE + "=" + ExpenseReport.class.getName() +")(eventType=" + ObjectWithProperties.OBJECT_ADDED + "))");
-		
-		lineItemAddedHandlerService = context.registerService(EventHandler.class.getName(), handler, properties);
-	}
-	
-	/**
-	 * This method starts the {@link #lineItemRemovedHandlerService} service. This service
-	 * is notified (via the {@link EventHandler#handleEvent(Event)} method) whenever
-	 * a {@link LineItem} instance is removed from an {@link ExpenseReport}.
-	 * 
-	 * @see #lineItemRemovedHandlerService
-	 * @param context
-	 */
-	void startLineItemRemovedHandlerService(BundleContext context) {
-		EventHandler handler = new EventHandler() {
-			public void handleEvent(final Event event) {
-				if (event.getProperty(ObjectWithProperties.SOURCE) != expenseReport) return;
-				asyncExec(new Runnable() {
-					public void run() {
-						lineItemTableViewer.remove(event.getProperty(ObjectWithProperties.OBJECT_REMOVED));
-					}
-				});
-			}			
-		};
-		Properties properties = new Properties();
-		properties.put(EventConstants.EVENT_TOPIC, ObjectWithProperties.PROPERTY_CHANGE_TOPIC);
-		properties.put(EventConstants.EVENT_FILTER, "(&(" + ObjectWithProperties.SOURCE_TYPE + "=" + ExpenseReport.class.getName() +")(eventType=" + ObjectWithProperties.OBJECT_REMOVED + "))");
-		
-		lineItemRemovedHandlerService = context.registerService(EventHandler.class.getName(), handler, properties);
-	}
-	
-	void startExpenseReportChangedHandlerService(BundleContext context) {
-		EventHandler handler = new EventHandler() {
-			public void handleEvent(Event event) {
-				handleExpenseReportPropertyChangedEvent(event);				
-			}			
-		};
-		Properties properties = new Properties();
-		properties.put(EventConstants.EVENT_TOPIC, ObjectWithProperties.PROPERTY_CHANGE_TOPIC);
-		properties.put(EventConstants.EVENT_FILTER, "(" + ExpenseReport.class.getName() +"=true)");
-		
-		expenseReportChangedEventHandlerService = context.registerService(EventHandler.class.getName(), handler, properties);
-	}
-	
-	public void dispose() {
-		lineItemAddedHandlerService.unregister();
-		lineItemRemovedHandlerService.unregister();
-		lineItemChangedHandlerService.unregister();
-		expenseReportChangedEventHandlerService.unregister();
-		
+	public void dispose() {		
 		getExpenseReportingViewModel().removeListener(expenseReportingUIModelListener);
 		
 		super.dispose();
@@ -692,7 +623,7 @@ public class ExpenseReportView extends AbstractView {
 		 */
 		asyncExec(new Runnable() {
 			public void run() {
-				updateTitleField();
+				handleTitlePropertyChanged();
 				updateLineItemsTable();
 			}			
 		});
@@ -711,7 +642,7 @@ public class ExpenseReportView extends AbstractView {
 	 * current state of the title property of the current {@link ExpenseReport}.
 	 * This method must be run in the UI thread.
 	 */
-	void updateTitleField() {
+	void handleTitlePropertyChanged() {
 		titleText.setText(expenseReport == null ? "" : expenseReport.getTitle());
 	}
 	
@@ -727,32 +658,5 @@ public class ExpenseReportView extends AbstractView {
 	void updateLineItemsTable() {
 		lineItemTableViewer.setInput(expenseReport);
 		lineItemTableViewer.getTable().setEnabled(expenseReport != null);
-	}
-
-	/**
-	 * This method handles property change events reported by any instance of
-	 * {@link ExpenseReport}. For our purposes, we only care about changes made
-	 * to the {@link #expenseReport} under observation (events generated for any
-	 * other instance are discarded). For now, the only simple property for an
-	 * ExpenseReport that we display is the title; if the title property
-	 * changes, we update the {@link #titleText} field to reflect the change.
-	 * 
-	 * <p>
-	 * This method can be run from any thread.
-	 * 
-	 * @param event
-	 *            an instance of {@link Event} detailing the property change.
-	 */
-	void handleExpenseReportPropertyChangedEvent(Event event) {
-		if (event.getProperty(ObjectWithProperties.SOURCE) != expenseReport) return;
-		
-		final String property = (String)event.getProperty(ObjectWithProperties.PROPERTY_NAME);
-		if (ExpenseReport.TITLE_PROPERTY.equals(property)) {
-			asyncExec(new Runnable() {
-				public void run() {
-					updateTitleField();
-				}
-			});
-		}
 	}
 }
