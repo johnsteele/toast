@@ -292,7 +292,7 @@ public class ExpenseReportView extends AbstractView {
 	}
 
 	private void customizeExpenseReportView(final Composite parent) {
-		ExpenseReportPrivilegedAccessor proxy = new ExpenseReportPrivilegedAccessor(parent, this);
+		ExpenseReportViewPrivilegedAccessor proxy = new ExpenseReportViewPrivilegedAccessor(parent, this);
 		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXPENSE_REPORT_VIEW_CUSTOMIZERS);
 			for(int index=0;index<elements.length;index++) {
 				try {

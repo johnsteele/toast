@@ -57,7 +57,6 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 				IStructuredSelection selection = (IStructuredSelection)binderView.getExpenseReportViewer().getSelection();
 				Object[] objects = selection.toArray();
 				for(int index=0;index<objects.length;index++){
-					// TODO Review deadlock potential.
 					binderView.getBinder().removeExpenseReport((ExpenseReport)objects[index]);					
 				}
 			}			

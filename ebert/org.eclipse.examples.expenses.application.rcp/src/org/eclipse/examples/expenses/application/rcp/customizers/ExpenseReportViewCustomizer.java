@@ -1,10 +1,20 @@
+/*******************************************************************************
+ * Copyright (c) 2009 The Eclipse Foundation.
+ * All rights reserved. This program and the accompanying materials
+ * are made available under the terms of the Eclipse Public License v1.0
+ * which accompanies this distribution, and is available at
+ * http://www.eclipse.org/legal/epl-v10.html
+ * 
+ * Contributors:
+ *    The Eclipse Foundation - initial API and implementation
+ *******************************************************************************/
 package org.eclipse.examples.expenses.application.rcp.customizers;
 
 import java.text.DateFormat;
 import java.util.Date;
 
 import org.eclipse.examples.expenses.core.LineItem;
-import org.eclipse.examples.expenses.views.ExpenseReportPrivilegedAccessor;
+import org.eclipse.examples.expenses.views.ExpenseReportViewPrivilegedAccessor;
 import org.eclipse.examples.expenses.views.IExpenseReportViewCustomizer;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
@@ -18,13 +28,13 @@ import org.eclipse.nebula.widgets.cdatetime.CDateTimeCellEditor;
 public class ExpenseReportViewCustomizer implements
 		IExpenseReportViewCustomizer {
 
-	private ExpenseReportPrivilegedAccessor accessor;
+	private ExpenseReportViewPrivilegedAccessor accessor;
 
 	public ExpenseReportViewCustomizer() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public void postCreateExpenseReportView(ExpenseReportPrivilegedAccessor accessor) {
+	public void postCreateExpenseReportView(ExpenseReportViewPrivilegedAccessor accessor) {
 		this.accessor = accessor;
 		final TableViewer viewer = accessor.getLineItemViewer();
 		customizeDateColumn(viewer);
