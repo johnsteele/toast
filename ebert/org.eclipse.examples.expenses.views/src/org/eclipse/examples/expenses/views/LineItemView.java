@@ -212,16 +212,16 @@ public class LineItemView extends AbstractView {
 		createCommentLabel(parent);
 		createCommentField(parent);
 		
-		Composite buttons = createButtonArea(parent);
-		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
-		layoutData.horizontalSpan = 2;
-		buttons.setLayoutData(layoutData);
+//		Composite buttons = createButtonArea(parent);
+//		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
+//		layoutData.horizontalSpan = 2;
+//		buttons.setLayoutData(layoutData);
 		
 		update();
 		
 		hookSelectionListener();
 		
-		customizeView(parent);
+//		customizeView(parent);
 	}
 
 

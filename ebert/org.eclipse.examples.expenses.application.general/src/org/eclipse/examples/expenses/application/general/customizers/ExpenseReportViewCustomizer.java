@@ -11,7 +11,6 @@
 package org.eclipse.examples.expenses.application.general.customizers;
 
 import org.eclipse.examples.expenses.core.LineItem;
-import org.eclipse.examples.expenses.views.AbstractView;
 import org.eclipse.examples.expenses.views.ExpenseReportViewPrivilegedAccessor;
 import org.eclipse.examples.expenses.views.IExpenseReportViewCustomizer;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -20,9 +19,6 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
@@ -33,32 +29,10 @@ public class ExpenseReportViewCustomizer implements
 
 	public void postCreateExpenseReportView(ExpenseReportViewPrivilegedAccessor accessor) {
 		this.accessor = accessor;
-		
-		createButtons(accessor.getParent());
-	}
-
-	/**
-	 * This method creates and populates an area for buttons.
-	 * This method assumes that the parent {@link Composite} has
-	 * a {@link GridLayout} with one column for a layout manager.
-	 * 
-	 * @see AbstractView#createButtonArea(Composite)
-	 * 
-	 * @param parent A composite into which the buttons will be created.
-	 */
-	void createButtons(Composite parent) {
-		Composite buttonArea = createButtonArea(parent);
+		Composite buttonArea = accessor.getButtonArea();
 
 		createAddButton(buttonArea);
 		createRemoveButton(buttonArea);
-
-		buttonArea.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-	}
-
-	protected Composite createButtonArea(Composite parent) {
-		Composite buttonArea = new Composite(parent, SWT.NONE);
-		buttonArea.setLayout(new RowLayout());
-		return buttonArea;
 	}
 	
 	void createAddButton(Composite parent) {

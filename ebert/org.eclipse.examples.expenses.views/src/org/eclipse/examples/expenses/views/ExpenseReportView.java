@@ -42,6 +42,7 @@ import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.TableColumn;
@@ -280,7 +281,7 @@ public class ExpenseReportView extends AbstractView {
 		
 		createTitleArea(parent);		
 		createLineItemTableViewer(parent);		
-				
+		
 		customizeExpenseReportView(parent);
 
 		/*
@@ -291,8 +292,14 @@ public class ExpenseReportView extends AbstractView {
 		setReport(getExpenseReportingViewModel().getReport());
 	}
 
+	protected Composite createButtonArea(Composite parent) {
+		Composite buttonArea = new Composite(parent, SWT.NONE);
+		buttonArea.setLayout(new RowLayout());
+		return buttonArea;
+	}
+	
 	private void customizeExpenseReportView(final Composite parent) {
-		ExpenseReportViewPrivilegedAccessor proxy = new ExpenseReportViewPrivilegedAccessor(parent, this);
+		ExpenseReportViewPrivilegedAccessor proxy = new ExpenseReportViewPrivilegedAccessor(this);
 		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXPENSE_REPORT_VIEW_CUSTOMIZERS);
 			for(int index=0;index<elements.length;index++) {
 				try {
@@ -331,6 +338,7 @@ public class ExpenseReportView extends AbstractView {
 			lineItemTableViewer.update(event.getSource(), new String[] {event.getProperty()});
 		}
 	};
+	private Composite buttonArea;
 	
 	/**
 	 * This method adds {@link IPropertyChangeListener}s to an
@@ -607,5 +615,26 @@ public class ExpenseReportView extends AbstractView {
 
 	TableViewer getLineItemViewer() {
 		return lineItemTableViewer;
+	}
+
+	/**
+	 * This method returns the area of the view where buttons can be added. The
+	 * button area stretches across the bottom of the view; it uses a
+	 * {@link RowLayout} to, curiously enough, assemble widgets placed into it
+	 * in a tidy row. Note that the area is lazily created the first time that
+	 * this method is called. Since widget creation must occur in the UI Thread,
+	 * there is no need for any explicit synchronization.
+	 * <p>
+	 * WARNING: This method must be run in the UI Thread.
+	 * 
+	 * @return a {@link Composite}.
+	 */
+	Composite getButtonArea() {
+		if (buttonArea == null) {
+			buttonArea = new Composite(lineItemTableViewer.getTable().getParent(), SWT.NONE);
+			buttonArea.setLayout(new RowLayout());
+			buttonArea.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		}
+		return buttonArea;
 	}
 }

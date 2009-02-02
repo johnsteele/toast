@@ -13,6 +13,7 @@ package org.eclipse.examples.expenses.views;
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TableColumn;
 
@@ -32,17 +33,10 @@ import org.eclipse.swt.widgets.TableColumn;
  * extensions via an instance of {@link IExpenseReportViewCustomizer}.
  */
 public final class ExpenseReportViewPrivilegedAccessor {
-
-	private final Composite parent;
 	private final ExpenseReportView expenseReportView;
 
-	ExpenseReportViewPrivilegedAccessor(Composite parent, ExpenseReportView expenseReportView) {
-		this.parent = parent;
+	ExpenseReportViewPrivilegedAccessor(ExpenseReportView expenseReportView) {
 		this.expenseReportView = expenseReportView;
-	}
-
-	public Composite getParent() {
-		return parent;
 	}
 
 	public ExpenseReport getExpenseReport() {
@@ -63,5 +57,19 @@ public final class ExpenseReportViewPrivilegedAccessor {
 
 	public TableColumn getCommentColumn() {
 		return expenseReportView.commentColumn;
+	}
+	
+	/**
+	 * This method returns the area of the view where buttons can be added. The
+	 * button area stretches across the bottom of the view; it uses a
+	 * {@link RowLayout} to, curiously enough, assemble widgets placed into it
+	 * in a tidy row. 
+	 * <p>
+	 * WARNING: This method must be run in the UI Thread.
+	 * 
+	 * @return a {@link Composite}.
+	 */
+	public Composite getButtonArea() {
+		return expenseReportView.getButtonArea();
 	}
 }
