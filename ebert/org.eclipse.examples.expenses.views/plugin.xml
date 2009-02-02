@@ -2,6 +2,8 @@
 <?eclipse version="3.2"?>
 <plugin>
    <extension-point id="viewCustomizers" name="View Customizers" schema="schema/viewCustomizers.exsd"/>
+   <extension-point id="binderViewCustomizers" name="Binder View Customizers" schema="schema/binderViewCustomizers.exsd"/>
+   <extension-point id="expenseReportViewCustomizers" name="Expense Report View Customizers" schema="schema/expenseReportViewCustomizers.exsd"/>
    <extension
          point="org.eclipse.ui.views">
       <view

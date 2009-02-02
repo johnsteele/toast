@@ -29,9 +29,9 @@
    </extension>
 
  <extension
-       point="org.eclipse.examples.expenses.views.viewCustomizers">
+       point="org.eclipse.examples.expenses.views.expenseReportViewCustomizers">
     <customizer
-          class="org.eclipse.examples.expenses.application.ViewCustomizer">
+          class="org.eclipse.examples.expenses.application.rcp.customizers.ExpenseReportViewCustomizer">
     </customizer>
  </extension>
 </plugin>

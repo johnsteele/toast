@@ -10,6 +10,9 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.views;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.examples.expenses.core.CollectionPropertyChangeEvent;
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
@@ -27,11 +30,8 @@ import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 
 /**
@@ -50,11 +50,17 @@ import org.eclipse.swt.widgets.Composite;
  */
 public class BinderView extends AbstractView {
 
+	private static final String BINDER_VIEW_CUSTOMIZERS = "org.eclipse.examples.expenses.views.binderViewCustomizers";
+
+	/**
+	 * This value is the id of the extension that defines this view.
+	 * The fully qualified name of this class just happens to share the same name,
+	 * so&mdash;as a matter of convenience&mdash;we're exploiting that similarity here
+	 * rather than hard-code the name as a string.
+	 */
 	public static final String ID = BinderView.class.getName();
 	
-	ListViewer viewer;
-	Button removeButton;
-	Button addButton;
+	ListViewer expenseReportViewer;
 	
 	ExpensesBinder expensesBinder;
 	
@@ -129,7 +135,7 @@ public class BinderView extends AbstractView {
 				 * more information, there really is listte more that we can do
 				 * than to refresh the viewer
 				 */ 
-				viewer.refresh();
+				expenseReportViewer.refresh();
 				hookListeners(getBinder());
 			}
 		}
@@ -153,8 +159,8 @@ public class BinderView extends AbstractView {
 			}
 			syncExec(new Runnable() {
 				public void run() {
-					viewer.add(event.added);
-					viewer.remove(event.removed);
+					expenseReportViewer.add(event.added);
+					expenseReportViewer.remove(event.removed);
 				}				
 			});
 		}		
@@ -184,44 +190,21 @@ public class BinderView extends AbstractView {
 					 * figure out if the table contents need to be resorted, or
 					 * refiltered.
 					 */
-					viewer.update(event.getSource(), new String[] {event.getProperty()});
+					expenseReportViewer.update(event.getSource(), new String[] {event.getProperty()});
 				}
 			});
 		}
 	};
 	
+	/**
+	 * This method, while public is <em>not</em> part of the public API. This
+	 * method is called as part of the part creation process by the framework.
+	 */
 	public void createPartControl(final Composite parent) {
 		parent.setLayout(new GridLayout(1, true));
-		createReportListViewer(parent);
-		
-		Composite buttons = createButtonArea(parent);
-		buttons.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-		
-		addButton = new Button(getButtonArea(), SWT.PUSH);
-		addButton.setText("Add");
-		addButton.addSelectionListener(new SelectionListener() {
-			public void widgetDefaultSelected(SelectionEvent e) {				
-			}
+		createExpenseReportViewer(parent);
 
-			public void widgetSelected(SelectionEvent e) {
-				getBinder().addExpenseReport(new ExpenseReport("New Expense Report"));
-			}
-			
-		});
-
-		removeButton = new Button(getButtonArea(), SWT.PUSH);
-		removeButton.setText("Remove");
-		//TODO Implement some behaviour for the Remove button
-		
-		updateButtons();
-		
-		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {
-				updateButtons();
-			}			
-		});
-		
-		customizeView(parent);
+		customizeBinderView(parent);
 		
 		/*
 		 * Add a listener to the UI Model; should the binder change, we'll update
@@ -230,21 +213,33 @@ public class BinderView extends AbstractView {
 		getExpenseReportingViewModel().addListener(expenseReportingUIModelListener);
 		setBinder(getExpenseReportingViewModel().getBinder());
 		
-		viewer.setInput(getBinder());
+		expenseReportViewer.setInput(getBinder());
 	}
 
-	private void createReportListViewer(Composite parent) {
-		viewer = new ListViewer(parent, SWT.BORDER);
-		viewer.setContentProvider(contentProvider);
-		viewer.setLabelProvider(labelProvider);		
-		viewer.addSelectionChangedListener(new ISelectionChangedListener() {
+	private void customizeBinderView(final Composite parent) {
+		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(BINDER_VIEW_CUSTOMIZERS);
+			for(int index=0;index<elements.length;index++) {
+				try {
+					IBinderViewCustomizer customizer = (IBinderViewCustomizer) elements[index].createExecutableExtension("class");
+					customizer.postCreateBinderView(this, parent);
+				} catch (CoreException e) {
+					// TODO Need to log this.
+				}
+		}
+	}
+
+	private void createExpenseReportViewer(Composite parent) {
+		expenseReportViewer = new ListViewer(parent, SWT.BORDER);
+		expenseReportViewer.setContentProvider(contentProvider);
+		expenseReportViewer.setLabelProvider(labelProvider);		
+		expenseReportViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				IStructuredSelection selection = (IStructuredSelection)event.getSelection();
 				getExpenseReportingViewModel().setReport((ExpenseReport) selection.getFirstElement());
 			}			
 		});
-		getSite().setSelectionProvider(viewer);
-		viewer.getList().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		getSite().setSelectionProvider(expenseReportViewer);
+		expenseReportViewer.getList().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 	}
 
 	/**
@@ -259,12 +254,20 @@ public class BinderView extends AbstractView {
 		return ExpenseReportingUI.getDefault().getExpenseReportingViewModel();
 	}
 
+	/**
+	 * This method is <em>not</em> part of the public API.
+	 */
 	public void dispose() {
 		getExpenseReportingViewModel().removeListener(expenseReportingUIModelListener);
 		super.dispose();
 	}
 
-	ExpensesBinder getBinder() {
+	/**
+	 * This method returns the binder that is currently being considered by
+	 * the receiver. This method is part of the public API.
+	 * @return
+	 */
+	public ExpensesBinder getBinder() {
 		return expensesBinder;
 	}
 
@@ -293,22 +296,20 @@ public class BinderView extends AbstractView {
 	void unhookListeners(ExpenseReport expenseReport) {
 		expenseReport.removePropertyChangeListener(expenseReportListener);
 	}
-
-	private void updateButtons() {
-		boolean hasSelection = !((IStructuredSelection)viewer.getSelection()).isEmpty();
-		removeButton.setEnabled(hasSelection);
-	}
 		
 	protected void updateViewerInput(ExpensesBinder expensesBinder) {
-		viewer.setInput(expensesBinder);
+		expenseReportViewer.setInput(expensesBinder);
 	}
 
+	/**
+	 * This method is <em>not</em> part of the public API.
+	 */
 	public void setFocus() {
-		viewer.getList().setFocus();
+		expenseReportViewer.getList().setFocus();
 	}
 
-	public Viewer getViewer() {
-		return viewer;
+	public Viewer getExpenseReportViewer() {
+		return expenseReportViewer;
 	}
 
 	public void setBinder(final ExpensesBinder expensesBinder) {
@@ -316,14 +317,12 @@ public class BinderView extends AbstractView {
 		asyncExec(new Runnable() {
 			public void run() {
 				setEnabled(expensesBinder != null);
-				viewer.setInput(expensesBinder);
+				expenseReportViewer.setInput(expensesBinder);
 			}			
 		});
 	}
 
 	private void setEnabled(boolean enabled) {
-		viewer.getControl().setEnabled(enabled);
-		addButton.setEnabled(enabled);
-		removeButton.setEnabled(enabled);
+		expenseReportViewer.getControl().getParent().setEnabled(enabled);
 	}
 }

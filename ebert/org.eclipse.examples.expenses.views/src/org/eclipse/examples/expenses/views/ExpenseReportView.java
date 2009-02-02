@@ -12,6 +12,9 @@ package org.eclipse.examples.expenses.views;
 
 import java.util.Date;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.examples.expenses.core.CollectionPropertyChangeEvent;
 import org.eclipse.examples.expenses.core.ExpenseReport;
@@ -36,12 +39,9 @@ import org.eclipse.jface.viewers.ViewerSorter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.TableColumn;
@@ -77,6 +77,8 @@ public class ExpenseReportView extends AbstractView {
 	 */
 	public static final String ID = ExpenseReportView.class.getName();
 	
+	private static final String EXPENSE_REPORT_VIEW_CUSTOMIZERS = "org.eclipse.examples.expenses.views.expenseReportViewCustomizers";
+
 	TableViewer lineItemTableViewer;
 	
 	// TODO I'd rather these not be public
@@ -86,7 +88,6 @@ public class ExpenseReportView extends AbstractView {
 	ExpenseReport expenseReport;
 
 	Text titleText;
-	Button removeButton;
 	
 	/**
 	 * This field provides an {@link IContentProvider} that takes an
@@ -279,9 +280,8 @@ public class ExpenseReportView extends AbstractView {
 		
 		createTitleArea(parent);		
 		createLineItemTableViewer(parent);		
-		createButtons(parent);	
 				
-		customizeView(parent);
+		customizeExpenseReportView(parent);
 
 		/*
 		 * Add a listener to the UI Model; should the binder change, we'll update
@@ -289,11 +289,21 @@ public class ExpenseReportView extends AbstractView {
 		 */
 		getExpenseReportingViewModel().addListener(expenseReportingUIModelListener);
 		setReport(getExpenseReportingViewModel().getReport());
-		
-		updateRemoveButton();
 	}
 
-
+	private void customizeExpenseReportView(final Composite parent) {
+		ExpenseReportPrivilegedAccessor proxy = new ExpenseReportPrivilegedAccessor(parent, this);
+		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXPENSE_REPORT_VIEW_CUSTOMIZERS);
+			for(int index=0;index<elements.length;index++) {
+				try {
+					IExpenseReportViewCustomizer customizer = (IExpenseReportViewCustomizer) elements[index].createExecutableExtension("class");
+					customizer.postCreateExpenseReportView(proxy);
+				} catch (CoreException e) {
+					// TODO Need to log this.
+				}
+		}
+	}
+	
 	IPropertyChangeListener expenseReportPropertyChangeListener = new IPropertyChangeListener() {
 		public void propertyChange(PropertyChangeEvent event) {
 			if (event.getSource() != expenseReport) {
@@ -521,63 +531,6 @@ public class ExpenseReportView extends AbstractView {
 	}
 
 	/**
-	 * This method creates and populates an area for buttons.
-	 * This method assumes that the parent {@link Composite} has
-	 * a {@link GridLayout} with one column for a layout manager.
-	 * 
-	 * @see AbstractView#createButtonArea(Composite)
-	 * 
-	 * @param parent A composite into which the buttons will be created.
-	 */
-	void createButtons(Composite parent) {
-		Composite buttonArea = createButtonArea(parent);
-
-		createAddButton(buttonArea);
-		createRemoveButton(buttonArea);
-
-		buttonArea.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
-	}
-	
-	void createAddButton(Composite parent) {
-		Button addButton = new Button(parent, SWT.PUSH);
-		addButton.setText("Add");
-		addButton.addSelectionListener(new SelectionListener() {
-			public void widgetSelected(SelectionEvent arg0) {
-				if (expenseReport == null) return;
-				expenseReport.addLineItem(new LineItem());
-			}
-	
-			public void widgetDefaultSelected(SelectionEvent arg0) {
-			}			
-		});
-	}
-
-	void createRemoveButton(Composite parent) {
-		removeButton = new Button(parent, SWT.PUSH);
-		removeButton.setText("Remove");
-		removeButton.addSelectionListener(new SelectionListener() {
-			public void widgetSelected(SelectionEvent arg0) {
-				if (expenseReport == null) return;
-				LineItem lineItem = (LineItem) ((IStructuredSelection)lineItemTableViewer.getSelection()).getFirstElement();
-				if (lineItem == null) return;
-				expenseReport.removeLineItem(lineItem);
-			}
-	
-			public void widgetDefaultSelected(SelectionEvent arg0) {
-			}			
-		});
-		/*
-		 * Add a listener to the selection on the viewer. When the
-		 * selection changes, update the state of the remove button.
-		 */
-		lineItemTableViewer.addSelectionChangedListener(new ISelectionChangedListener() {
-			public void selectionChanged(SelectionChangedEvent event) {
-				updateRemoveButton();
-			}			
-		});
-	}
-
-	/**
 	 * This method return an instance of {@link DateFormat} that is appropriate
 	 * for formatting the output of dates for the current user.
 	 * <p>
@@ -593,10 +546,6 @@ public class ExpenseReportView extends AbstractView {
 		getExpenseReportingViewModel().removeListener(expenseReportingUIModelListener);
 		
 		super.dispose();
-	}
-
-	void updateRemoveButton() {
-		removeButton.setEnabled(viewerHasSelection());
 	}
 
 	/**
@@ -633,10 +582,6 @@ public class ExpenseReportView extends AbstractView {
 		lineItemTableViewer.getControl().setFocus();
 	}
 
-	public Viewer getViewer() {
-		return lineItemTableViewer;
-	}
-
 	/**
 	 * This method, curiously enough, updates the title field to reflect the
 	 * current state of the title property of the current {@link ExpenseReport}.
@@ -658,5 +603,9 @@ public class ExpenseReportView extends AbstractView {
 	void updateLineItemsTable() {
 		lineItemTableViewer.setInput(expenseReport);
 		lineItemTableViewer.getTable().setEnabled(expenseReport != null);
+	}
+
+	TableViewer getLineItemViewer() {
+		return lineItemTableViewer;
 	}
 }
