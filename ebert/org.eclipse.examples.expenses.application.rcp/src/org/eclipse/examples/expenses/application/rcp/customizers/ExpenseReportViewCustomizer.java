@@ -14,7 +14,7 @@ import java.text.DateFormat;
 import java.util.Date;
 
 import org.eclipse.examples.expenses.core.LineItem;
-import org.eclipse.examples.expenses.views.ExpenseReportViewPrivilegedAccessor;
+import org.eclipse.examples.expenses.views.ExpenseReportViewProxy;
 import org.eclipse.examples.expenses.views.IExpenseReportViewCustomizer;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
@@ -28,13 +28,13 @@ import org.eclipse.nebula.widgets.cdatetime.CDateTimeCellEditor;
 public class ExpenseReportViewCustomizer implements
 		IExpenseReportViewCustomizer {
 
-	private ExpenseReportViewPrivilegedAccessor accessor;
+	private ExpenseReportViewProxy accessor;
 
 	public ExpenseReportViewCustomizer() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public void postCreateExpenseReportView(ExpenseReportViewPrivilegedAccessor accessor) {
+	public void postCreateExpenseReportView(ExpenseReportViewProxy accessor) {
 		this.accessor = accessor;
 		final TableViewer viewer = accessor.getLineItemViewer();
 		customizeDateColumn(viewer);

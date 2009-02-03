@@ -63,6 +63,9 @@ import com.ibm.icu.text.NumberFormat;
  * library, and the subset of Eclipse Platform APIs common to RCP, RAP, and
  * eRCP. A customization hook is provided so that the view can be extended to
  * exploit features that are available on specific platforms.
+ * 
+ * @see IExpenseReportViewCustomizer
+ * @see #customizeExpenseReportView()
  */
 public class ExpenseReportView extends AbstractView {
 
@@ -77,15 +80,9 @@ public class ExpenseReportView extends AbstractView {
 	 * given for the ID in the plugin.xml file.
 	 */
 	public static final String ID = ExpenseReportView.class.getName();
-	
-	private static final String EXPENSE_REPORT_VIEW_CUSTOMIZERS = "org.eclipse.examples.expenses.views.expenseReportViewCustomizers";
 
 	TableViewer lineItemTableViewer;
-	
-	// TODO I'd rather these not be public
-	public TableColumn dateColumn;
-	public TableColumn commentColumn;
-	
+		
 	ExpenseReport expenseReport;
 
 	Text titleText;
@@ -259,7 +256,6 @@ public class ExpenseReportView extends AbstractView {
 	};
 	
 	private Composite titleArea;
-			
 
 	ExpenseReportingViewModelListener expenseReportingUIModelListener = new ExpenseReportingViewModelListener() {
 		public void reportChanged(ExpenseReport report) {
@@ -282,7 +278,7 @@ public class ExpenseReportView extends AbstractView {
 		createTitleArea(parent);		
 		createLineItemTableViewer(parent);		
 		
-		customizeExpenseReportView(parent);
+		customizeExpenseReportView();
 
 		/*
 		 * Add a listener to the UI Model; should the binder change, we'll update
@@ -292,21 +288,28 @@ public class ExpenseReportView extends AbstractView {
 		setReport(getExpenseReportingViewModel().getReport());
 	}
 
-	protected Composite createButtonArea(Composite parent) {
-		Composite buttonArea = new Composite(parent, SWT.NONE);
-		buttonArea.setLayout(new RowLayout());
-		return buttonArea;
-	}
-	
-	private void customizeExpenseReportView(final Composite parent) {
-		ExpenseReportViewPrivilegedAccessor proxy = new ExpenseReportViewPrivilegedAccessor(this);
-		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(EXPENSE_REPORT_VIEW_CUSTOMIZERS);
+	/**
+	 * This method finds and invokes <code>expenseReportViewCustomizers</code> extensions.
+	 * These so-called &quot;customizers&quot; are given an opportunity to customize the
+	 * receiver by adding buttons, modifying the table viewer (by adding cell editors,
+	 * for example), and other such things.
+	 * <p>
+	 * An instance of {@link ExpenseReportViewProxy}, wrapping the receiver
+	 * is passed to the customizers. This object includes method that provide the
+	 * customizer with access to restricted parts of the receiver.
+	 * 
+	 * @see ExpenseReportViewProxy
+	 * @see IExpenseReportViewCustomizer
+	 */
+	void customizeExpenseReportView() {
+		ExpenseReportViewProxy proxy = new ExpenseReportViewProxy(this);
+		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(IExpenseReportViewCustomizer.EXTENSION_POINT_ID);
 			for(int index=0;index<elements.length;index++) {
 				try {
 					IExpenseReportViewCustomizer customizer = (IExpenseReportViewCustomizer) elements[index].createExecutableExtension("class");
 					customizer.postCreateExpenseReportView(proxy);
 				} catch (CoreException e) {
-					// TODO Need to log this.
+					ExpenseReportingUI.getDefault().getLog().log(e.getStatus());
 				}
 		}
 	}
@@ -514,6 +517,11 @@ public class ExpenseReportView extends AbstractView {
 		lineItemTableViewer.getTable().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 	}
 
+	TableColumn dateColumn;
+	TableColumn commentColumn;
+	TableColumn typeColumn;
+	TableColumn amountColumn;
+	
 	void createDateColumn(TableViewer viewer) {
 		dateColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
 		dateColumn.setText("Date");
@@ -521,13 +529,13 @@ public class ExpenseReportView extends AbstractView {
 	}
 
 	void createTypeColumn(TableViewer viewer) {
-		TableColumn typeColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
+		typeColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
 		typeColumn.setText("Type");
 		typeColumn.setWidth(180);
 	}
 
 	void createAmountColumn(TableViewer viewer) {
-		TableColumn amountColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
+		amountColumn = new TableColumn(viewer.getTable(), SWT.LEFT);
 		amountColumn.setText("Amount");
 		amountColumn.setWidth(120);
 	}

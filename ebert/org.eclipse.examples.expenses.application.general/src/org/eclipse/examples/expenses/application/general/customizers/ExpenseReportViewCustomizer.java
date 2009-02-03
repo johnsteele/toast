@@ -11,7 +11,7 @@
 package org.eclipse.examples.expenses.application.general.customizers;
 
 import org.eclipse.examples.expenses.core.LineItem;
-import org.eclipse.examples.expenses.views.ExpenseReportViewPrivilegedAccessor;
+import org.eclipse.examples.expenses.views.ExpenseReportViewProxy;
 import org.eclipse.examples.expenses.views.IExpenseReportViewCustomizer;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -25,11 +25,11 @@ import org.eclipse.swt.widgets.Composite;
 public class ExpenseReportViewCustomizer implements
 		IExpenseReportViewCustomizer {
 
-	private ExpenseReportViewPrivilegedAccessor accessor;
+	private ExpenseReportViewProxy proxy;
 
-	public void postCreateExpenseReportView(ExpenseReportViewPrivilegedAccessor accessor) {
-		this.accessor = accessor;
-		Composite buttonArea = accessor.getButtonArea();
+	public void postCreateExpenseReportView(ExpenseReportViewProxy proxy) {
+		this.proxy = proxy;
+		Composite buttonArea = proxy.getButtonArea();
 
 		createAddButton(buttonArea);
 		createRemoveButton(buttonArea);
@@ -40,8 +40,8 @@ public class ExpenseReportViewCustomizer implements
 		addButton.setText("Add");
 		addButton.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent arg0) {
-				if (accessor.getExpenseReport() == null) return;
-				accessor.getExpenseReport().addLineItem(new LineItem());
+				if (proxy.getExpenseReport() == null) return;
+				proxy.getExpenseReport().addLineItem(new LineItem());
 			}
 	
 			public void widgetDefaultSelected(SelectionEvent arg0) {
@@ -54,11 +54,11 @@ public class ExpenseReportViewCustomizer implements
 		removeButton.setText("Remove");
 		removeButton.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent arg0) {
-				if (accessor.getExpenseReport() == null) return;
-				IStructuredSelection selection = (IStructuredSelection)accessor.getLineItemViewer().getSelection();
+				if (proxy.getExpenseReport() == null) return;
+				IStructuredSelection selection = (IStructuredSelection)proxy.getLineItemViewer().getSelection();
 				Object[] objects = selection.toArray();
 				for(int index=0;index<objects.length;index++){
-					accessor.getExpenseReport().removeLineItem((LineItem)objects[index]);					
+					proxy.getExpenseReport().removeLineItem((LineItem)objects[index]);					
 				}
 			}
 	
@@ -66,13 +66,13 @@ public class ExpenseReportViewCustomizer implements
 			}			
 		});
 		
-		removeButton.setEnabled(accessor.lineItemViewerHasSelection());
+		removeButton.setEnabled(proxy.lineItemViewerHasSelection());
 		
 		/*
 		 * Add a listener to the selection on the viewer. When the
 		 * selection changes, update the state of the remove button.
 		 */
-		accessor.getLineItemViewer().addSelectionChangedListener(new ISelectionChangedListener() {
+		proxy.getLineItemViewer().addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				removeButton.setEnabled(!event.getSelection().isEmpty());
 			}			
