@@ -22,7 +22,6 @@ import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
-import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
 import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModelListener;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
@@ -443,10 +442,6 @@ public class ExpenseReportView extends AbstractView {
 				titleText.setText((String)event.getNewValue());
 			}			
 		});
-	}
-	
-	private ExpenseReportingViewModel getExpenseReportingViewModel() {
-		return ExpenseReportingUI.getDefault().getExpenseReportingViewModel();
 	}
 
 	protected NumberFormat getCurrencyFormat() {

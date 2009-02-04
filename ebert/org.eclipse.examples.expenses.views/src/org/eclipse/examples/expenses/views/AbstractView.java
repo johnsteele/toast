@@ -10,6 +10,8 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.views;
 
+import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
+import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
 
@@ -42,6 +44,18 @@ public abstract class AbstractView extends ViewPart {
 	protected void syncExec(Runnable runnable) {
 		getViewSite().getWorkbenchWindow().getShell().getDisplay().syncExec(runnable);
 	}
+
+	/**
+	 * This method obtains the UI Model from the activator.
+	 * 
+	 * @see ExpenseReportingUI#getExpenseReportingViewModel()
+	 * 
+	 * @return An instance of a class that implements {@link IExpenseReportingUIModel} 
+	 * that is appropriate for the current user.
+	 */
+	protected ExpenseReportingViewModel getExpenseReportingViewModel() {
+		return ExpenseReportingUI.getDefault().getExpenseReportingViewModel();
+	}
 	
 	/**
 	 * This method gets the current user's {@link ULocale}. For an RCP-based application,
@@ -54,7 +68,6 @@ public abstract class AbstractView extends ViewPart {
 	 * @return
 	 */
 	ULocale getUserLocale() {
-		// TODO Determine the user's locale.
-		return ULocale.getDefault();
+		return getExpenseReportingViewModel().getUserLocale();
 	}
 }

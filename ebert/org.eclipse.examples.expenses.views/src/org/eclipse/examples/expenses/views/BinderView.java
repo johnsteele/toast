@@ -49,8 +49,7 @@ import org.eclipse.swt.widgets.Composite;
  */
 public class BinderView extends AbstractView {
 
-	private static final String BINDER_VIEW_CUSTOMIZERS = "org.eclipse.examples.expenses.views.binderViewCustomizers";
-
+	
 	/**
 	 * This value is the id of the extension that defines this view.
 	 * The fully qualified name of this class just happens to share the same name,
@@ -217,7 +216,7 @@ public class BinderView extends AbstractView {
 
 	void customizeBinderView(final Composite parent) {
 		BinderViewProxy proxy = new BinderViewProxy(this);
-		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(BINDER_VIEW_CUSTOMIZERS);
+		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(IBinderViewCustomizer.EXTENSION_POINT_ID);
 			for(int index=0;index<elements.length;index++) {
 				try {
 					IBinderViewCustomizer customizer = (IBinderViewCustomizer) elements[index].createExecutableExtension("class");
@@ -240,18 +239,6 @@ public class BinderView extends AbstractView {
 		});
 		getSite().setSelectionProvider(expenseReportViewer);
 		expenseReportViewer.getList().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-	}
-
-	/**
-	 * This method obtains the UI Model from the activator.
-	 * 
-	 * @see ExpenseReportingUI#getExpenseReportingViewModel()
-	 * 
-	 * @return An instance of a class that implements {@link IExpenseReportingUIModel} 
-	 * that is appropriate for the current user.
-	 */
-	ExpenseReportingViewModel getExpenseReportingViewModel() {
-		return ExpenseReportingUI.getDefault().getExpenseReportingViewModel();
 	}
 
 	/**

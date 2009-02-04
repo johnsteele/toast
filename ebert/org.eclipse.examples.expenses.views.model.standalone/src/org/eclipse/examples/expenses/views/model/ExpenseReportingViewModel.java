@@ -15,6 +15,8 @@ import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 
+import com.ibm.icu.util.ULocale;
+
 public class ExpenseReportingViewModel {
 
 	/**
@@ -98,5 +100,9 @@ public class ExpenseReportingViewModel {
 			listener.lineItemChanged(this.lineItem);
 		}
 	}
+	
 
+	public ULocale getUserLocale() {
+		return ULocale.getDefault();
+	}
 }

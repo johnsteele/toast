@@ -15,6 +15,8 @@ import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.rwt.RWT;
 
+import com.ibm.icu.util.ULocale;
+
 public class ExpenseReportingViewModel {
 	
 	public void addListener(ExpenseReportingViewModelListener listener) {
@@ -61,6 +63,10 @@ public class ExpenseReportingViewModel {
 
 	public void setReport(ExpenseReport report) {
 		getModelForCurrentUser().setReport(report);
+	}
+	
+	public ULocale getUserLocale() {
+		return ULocale.forLocale(RWT.getLocale());
 	}
 
 }
