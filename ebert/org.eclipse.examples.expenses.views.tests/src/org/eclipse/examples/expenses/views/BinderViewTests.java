@@ -25,6 +25,7 @@ import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.swt.widgets.Button;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -85,7 +86,7 @@ public class BinderViewTests extends WorkbenchTests {
 		ExpensesBinder newBinder = new ExpensesBinder();
 		ExpenseReport newReport = new ExpenseReport("A different Trip to Hell");
 		newBinder.addExpenseReport(report);
-		view.contentProvider.inputChanged(view.viewer, null, newBinder);
+		view.contentProvider.inputChanged(view.expenseReportViewer, null, newBinder);
 		
 		assertSame(view.binderListener, newBinder.getPropertyChangeListeners()[0]);
 		assertSame(view.expenseReportListener, newBinder.getReports()[0].getPropertyChangeListeners()[0]);
@@ -100,7 +101,7 @@ public class BinderViewTests extends WorkbenchTests {
 	 */
 	@Test
 	public void testThatContentProviderUnnstallsListenersOnBinderAndContainedReports() {		
-		view.contentProvider.inputChanged(view.viewer, binder, null);
+		view.contentProvider.inputChanged(view.expenseReportViewer, binder, null);
 		
 		assertEquals(0, binder.getPropertyChangeListeners().length);
 		assertEquals(0, binder.getReports()[0].getPropertyChangeListeners().length);
@@ -136,7 +137,7 @@ public class BinderViewTests extends WorkbenchTests {
 		binder.addExpenseReport(addedReport);
 		
 		assertEquals(view.expenseReportListener, addedReport.getPropertyChangeListeners()[0]);
-		assertSame(addedReport, view.viewer.getElementAt(1));
+		assertSame(addedReport, view.expenseReportViewer.getElementAt(1));
 	}
 
 	/**
@@ -152,7 +153,7 @@ public class BinderViewTests extends WorkbenchTests {
 		binder.removeExpenseReport(report);
 		
 		assertEquals(0, report.getPropertyChangeListeners().length);
-		assertNull(view.viewer.getElementAt(0));
+		assertNull(view.expenseReportViewer.getElementAt(0));
 	}
 	 
 	/**
@@ -188,8 +189,8 @@ public class BinderViewTests extends WorkbenchTests {
 	 */
 	@Test
 	public void testRemoveButtonEnabledWhenExpenseReportSelected() throws Exception {
-		view.viewer.setSelection(new StructuredSelection(binder.getReports()[0]));
-		assertTrue(view.removeButton.isEnabled());
+		view.expenseReportViewer.setSelection(new StructuredSelection(binder.getReports()[0]));
+		assertTrue(((Button)view.getButtonArea().getChildren()[1]).isEnabled());
 	}
 	
 	/**
@@ -201,7 +202,7 @@ public class BinderViewTests extends WorkbenchTests {
 	 */
 	@Test
 	public void testRemoveButtonDisabledWithEmptySelection() throws Exception {
-		view.viewer.setSelection(StructuredSelection.EMPTY);
-		assertFalse(view.removeButton.isEnabled());
+		view.expenseReportViewer.setSelection(StructuredSelection.EMPTY);
+		assertFalse(((Button)view.getButtonArea().getChildren()[1]).isEnabled());
 	}
 }
