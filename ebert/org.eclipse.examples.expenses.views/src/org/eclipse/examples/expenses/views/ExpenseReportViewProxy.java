@@ -18,13 +18,13 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TableColumn;
 
 /**
- * This class provides privileged access to an instance of ExpenseReportView. It
- * was created to solve a problem: in providing the ability to customize an
- * instance of ExpenseReportView, it becomes necessary to provide access too much
- * of the inner workings; in short it forces us to expose too much as API.
- * Instead of making the innards of the view accessible to just anybody, an
- * instance of this class is created to provide access only to consumers we want
- * access granted.
+ * This class provides privileged access to an instance of
+ * {@link ExpenseReportView}. It was created to solve a problem: in providing
+ * the ability to customize an instance of ExpenseReportView, it becomes
+ * necessary to provide access too much of the inner workings; in short it
+ * forces us to expose too much as API. Instead of making the innards of the
+ * view accessible to just anybody, an instance of this class is created to
+ * provide access only to consumers we want access granted.
  * <p>
  * The constructor for this class has default visibility meaning that instances
  * can only be created from within the package.
@@ -33,7 +33,7 @@ import org.eclipse.swt.widgets.TableColumn;
  * extensions via an instance of {@link IExpenseReportViewCustomizer}.
  * 
  * @see IExpenseReportViewCustomizer
- * @see ExpenseReportView
+ * @see ExpenseReportView#customizeExpenseReportView()
  */
 public final class ExpenseReportViewProxy {
 	private final ExpenseReportView expenseReportView;
@@ -51,7 +51,8 @@ public final class ExpenseReportViewProxy {
 	}
 
 	public boolean lineItemViewerHasSelection() {
-		return !((IStructuredSelection)getLineItemViewer().getSelection()).isEmpty();
+		return !((IStructuredSelection) getLineItemViewer().getSelection())
+				.isEmpty();
 	}
 
 	public TableColumn getDateColumn() {
@@ -61,20 +62,20 @@ public final class ExpenseReportViewProxy {
 	public TableColumn getAmountColumn() {
 		return expenseReportView.amountColumn;
 	}
-	
+
 	public TableColumn getTypeColumn() {
 		return expenseReportView.typeColumn;
 	}
-	
+
 	public TableColumn getCommentColumn() {
 		return expenseReportView.commentColumn;
 	}
-	
+
 	/**
 	 * This method returns the area of the view where buttons can be added. The
 	 * button area stretches across the bottom of the view; it uses a
 	 * {@link RowLayout} to, curiously enough, assemble widgets placed into it
-	 * in a tidy row. 
+	 * in a tidy row.
 	 * <p>
 	 * WARNING: This method must be run in the UI Thread.
 	 * 

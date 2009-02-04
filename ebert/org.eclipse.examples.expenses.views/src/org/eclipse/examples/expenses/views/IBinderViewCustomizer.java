@@ -13,6 +13,8 @@ package org.eclipse.examples.expenses.views;
 import org.eclipse.swt.widgets.Composite;
 
 public interface IBinderViewCustomizer {
+	public static final String EXTENSION_POINT_ID = "org.eclipse.examples.expenses.views.binderViewCustomizers";
+
 	/**
 	 * This method is called as the last act of the
 	 * {@link BinderView#createPartControl(org.eclipse.swt.widgets.Composite)}
