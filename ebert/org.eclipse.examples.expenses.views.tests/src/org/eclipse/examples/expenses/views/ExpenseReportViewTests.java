@@ -21,6 +21,7 @@ import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.StructuredSelection;
+import org.eclipse.swt.widgets.Button;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -250,7 +251,7 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 	public void testRemoveButtonEnabledWhenLineItemSelected() {
 		view.lineItemTableViewer.setSelection(new StructuredSelection(lineItemWithType));
 		processEvents();
-		assertTrue(view.removeButton.isEnabled());
+		assertTrue(((Button)view.getButtonArea().getChildren()[1]).isEnabled());
 	}
 
 	/**
@@ -264,7 +265,7 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 	public void testRemoveButtonDisabledWhenNoLineItemSelected() throws Exception {
 		view.lineItemTableViewer.setSelection(StructuredSelection.EMPTY);
 		processEvents();
-		assertFalse(view.removeButton.isEnabled());
+		assertFalse(((Button)view.getButtonArea().getChildren()[1]).isEnabled());
 	}
 	
 	/**
