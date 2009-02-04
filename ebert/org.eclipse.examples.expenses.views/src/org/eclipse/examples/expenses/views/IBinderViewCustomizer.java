@@ -28,5 +28,5 @@ public interface IBinderViewCustomizer {
 	 *            the instance of {@link Composite} that the BinderView is
 	 *            created in.
 	 */
-	public void postCreateBinderView(BinderView binderView, Composite parent);
+	public void postCreateBinderView(BinderViewProxy proxy);
 }
