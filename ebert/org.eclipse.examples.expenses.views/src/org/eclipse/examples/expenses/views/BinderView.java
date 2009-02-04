@@ -32,6 +32,7 @@ import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 
 /**
@@ -45,13 +46,10 @@ import org.eclipse.swt.widgets.Composite;
  *  
  * @see ExpensesBinder
  * @see AbstractView
- * @author wayne
- *
  */
 public class BinderView extends AbstractView {
 
-	private static final String BINDER_VIEW_CUSTOMIZERS = "org.eclipse.examples.expenses.views.binderViewCustomizers";
-
+	
 	/**
 	 * This value is the id of the extension that defines this view.
 	 * The fully qualified name of this class just happens to share the same name,
@@ -195,7 +193,7 @@ public class BinderView extends AbstractView {
 			});
 		}
 	};
-	
+
 	/**
 	 * This method, while public is <em>not</em> part of the public API. This
 	 * method is called as part of the part creation process by the framework.
@@ -216,19 +214,20 @@ public class BinderView extends AbstractView {
 		expenseReportViewer.setInput(getBinder());
 	}
 
-	private void customizeBinderView(final Composite parent) {
-		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(BINDER_VIEW_CUSTOMIZERS);
+	void customizeBinderView(final Composite parent) {
+		BinderViewProxy proxy = new BinderViewProxy(this);
+		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(IBinderViewCustomizer.EXTENSION_POINT_ID);
 			for(int index=0;index<elements.length;index++) {
 				try {
 					IBinderViewCustomizer customizer = (IBinderViewCustomizer) elements[index].createExecutableExtension("class");
-					customizer.postCreateBinderView(this, parent);
+					customizer.postCreateBinderView(proxy);
 				} catch (CoreException e) {
-					// TODO Need to log this.
+					ExpenseReportingUI.getDefault().getLog().log(e.getStatus());
 				}
 		}
 	}
 
-	private void createExpenseReportViewer(Composite parent) {
+	void createExpenseReportViewer(Composite parent) {
 		expenseReportViewer = new ListViewer(parent, SWT.BORDER);
 		expenseReportViewer.setContentProvider(contentProvider);
 		expenseReportViewer.setLabelProvider(labelProvider);		
@@ -250,7 +249,7 @@ public class BinderView extends AbstractView {
 	 * @return An instance of a class that implements {@link IExpenseReportingUIModel} 
 	 * that is appropriate for the current user.
 	 */
-	private ExpenseReportingViewModel getExpenseReportingViewModel() {
+	ExpenseReportingViewModel getExpenseReportingViewModel() {
 		return ExpenseReportingUI.getDefault().getExpenseReportingViewModel();
 	}
 
@@ -271,7 +270,7 @@ public class BinderView extends AbstractView {
 		return expensesBinder;
 	}
 
-	protected void hookListeners(ExpensesBinder binder) {
+	void hookListeners(ExpensesBinder binder) {
 		if (binder == null) return;
 		binder.addPropertyChangeListener(binderListener);
 		ExpenseReport[] reports = binder.getReports();
@@ -280,7 +279,7 @@ public class BinderView extends AbstractView {
 		}
 	}
 
-	protected void unhookListeners(ExpensesBinder binder) {
+	void unhookListeners(ExpensesBinder binder) {
 		if (binder == null) return;
 		binder.removePropertyChangeListener(binderListener);
 		ExpenseReport[] reports = binder.getReports();
@@ -297,7 +296,7 @@ public class BinderView extends AbstractView {
 		expenseReport.removePropertyChangeListener(expenseReportListener);
 	}
 		
-	protected void updateViewerInput(ExpensesBinder expensesBinder) {
+	void updateViewerInput(ExpensesBinder expensesBinder) {
 		expenseReportViewer.setInput(expensesBinder);
 	}
 
@@ -306,10 +305,6 @@ public class BinderView extends AbstractView {
 	 */
 	public void setFocus() {
 		expenseReportViewer.getList().setFocus();
-	}
-
-	public Viewer getExpenseReportViewer() {
-		return expenseReportViewer;
 	}
 
 	public void setBinder(final ExpensesBinder expensesBinder) {
@@ -324,5 +319,29 @@ public class BinderView extends AbstractView {
 
 	private void setEnabled(boolean enabled) {
 		expenseReportViewer.getControl().getParent().setEnabled(enabled);
+	}
+
+
+	Composite buttonArea;
+	
+	/**
+	 * This method returns the area of the view where buttons can be added. The
+	 * button area stretches across the bottom of the view; it uses a
+	 * {@link RowLayout} to, curiously enough, assemble widgets placed into it
+	 * in a tidy row. Note that the area is lazily created the first time that
+	 * this method is called. Since widget creation must occur in the UI Thread,
+	 * there is no need for any explicit synchronization.
+	 * <p>
+	 * WARNING: This method must be run in the UI Thread.
+	 * 
+	 * @return a {@link Composite}.
+	 */
+	Composite getButtonArea() {
+		if (buttonArea == null) {
+			buttonArea = new Composite(expenseReportViewer.getList().getParent(), SWT.NONE);
+			buttonArea.setLayout(new RowLayout());
+			buttonArea.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
+		}
+		return buttonArea;
 	}
 }
