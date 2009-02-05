@@ -10,7 +10,9 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.views;
 
+import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.swt.widgets.Composite;
 
@@ -50,5 +52,18 @@ public class BinderViewProxy {
 
 	public ExpensesBinder getBinder() {
 		return binderView.getBinder();
+	}
+
+	public void removeExpenseReports() {
+		IStructuredSelection selection = (IStructuredSelection) getExpenseReportViewer().getSelection();
+		Object[] objects = selection.toArray();
+		for(int index=0;index<objects.length;index++){
+			getBinder().removeExpenseReport((ExpenseReport)objects[index]);					
+		}
+	}
+
+	public void createExpenseReport() {
+		if (getBinder() == null) return;
+		getBinder().addExpenseReport(new ExpenseReport("New Expense Report"));
 	}
 }

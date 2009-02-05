@@ -40,8 +40,7 @@ public class ExpenseReportViewCustomizer implements
 		addButton.setText("Add");
 		addButton.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent arg0) {
-				if (proxy.getExpenseReport() == null) return;
-				proxy.getExpenseReport().addLineItem(new LineItem());
+				proxy.createLineItem();
 			}
 	
 			public void widgetDefaultSelected(SelectionEvent arg0) {
@@ -54,12 +53,7 @@ public class ExpenseReportViewCustomizer implements
 		removeButton.setText("Remove");
 		removeButton.addSelectionListener(new SelectionListener() {
 			public void widgetSelected(SelectionEvent arg0) {
-				if (proxy.getExpenseReport() == null) return;
-				IStructuredSelection selection = (IStructuredSelection)proxy.getLineItemViewer().getSelection();
-				Object[] objects = selection.toArray();
-				for(int index=0;index<objects.length;index++){
-					proxy.getExpenseReport().removeLineItem((LineItem)objects[index]);					
-				}
+				proxy.removeLineItems();
 			}
 	
 			public void widgetDefaultSelected(SelectionEvent arg0) {

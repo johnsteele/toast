@@ -10,7 +10,6 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.application.general.customizers;
 
-import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.views.BinderViewProxy;
 import org.eclipse.examples.expenses.views.IBinderViewCustomizer;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -56,11 +55,7 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 			}
 
 			public void widgetSelected(SelectionEvent e) {
-				IStructuredSelection selection = (IStructuredSelection) proxy.getExpenseReportViewer().getSelection();
-				Object[] objects = selection.toArray();
-				for(int index=0;index<objects.length;index++){
-					proxy.getBinder().removeExpenseReport((ExpenseReport)objects[index]);					
-				}
+				proxy.removeExpenseReports();
 			}			
 		});
 	}
@@ -73,7 +68,7 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 			}
 
 			public void widgetSelected(SelectionEvent e) {
-				proxy.getBinder().addExpenseReport(new ExpenseReport("New Expense Report"));
+				proxy.createExpenseReport();
 			}
 		});
 	}

@@ -11,6 +11,7 @@
 package org.eclipse.examples.expenses.views;
 
 import org.eclipse.examples.expenses.core.ExpenseReport;
+import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.layout.RowLayout;
@@ -83,5 +84,19 @@ public final class ExpenseReportViewProxy {
 	 */
 	public Composite getButtonArea() {
 		return expenseReportView.getButtonArea();
+	}
+
+	public void createLineItem() {
+		if (getExpenseReport() == null) return;
+		getExpenseReport().addLineItem(new LineItem());
+	}
+
+	public void removeLineItems() {
+		if (getExpenseReport() == null) return;
+		IStructuredSelection selection = (IStructuredSelection)getLineItemViewer().getSelection();
+		Object[] objects = selection.toArray();
+		for(int index=0;index<objects.length;index++){
+			getExpenseReport().removeLineItem((LineItem)objects[index]);					
+		}
 	}
 }
