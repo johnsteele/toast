@@ -58,28 +58,22 @@ public class LineItemViewTests {
 
 	@Test
 	public void testTypeFieldChangeReflectedInModel() {
-		ExpenseType type = ExpensesBinder.getTypes()[0];
+		ExpenseType type = ExpensesBinder.getExpenseTypes()[0];
 		view.typeDropdown.setSelection(new StructuredSelection(type));
 		assertSame(type, lineItem.getType());
 	}
 
 	@Test
 	public void testModelChangeReflectedinTypeField() {
-		ExpenseType type = ExpensesBinder.getTypes()[0];
+		ExpenseType type = ExpensesBinder.getExpenseTypes()[0];
 		lineItem.setType(type);
 		assertSame(type, ((IStructuredSelection)view.typeDropdown.getSelection()).getFirstElement());
 	}
 	
 	@Test
 	public void testTypeFieldCorrectlyObtainsContentAndLabels() {
-		view.typeDropdown.setInput(new ExpenseType[] {new ExpenseType("Expense", 1), new ExpenseType("Air fare", 2)});
+		view.typeDropdown.setInput(new ExpenseType[] {new ExpenseType("Expense"), new ExpenseType("Air fare")});
 		assertEquals("Expense", view.typeDropdown.getCombo().getItems()[0]);
 		assertEquals("Air fare", view.typeDropdown.getCombo().getItems()[1]);
 	}
-	
-	@Test
-	public void testSetLineItem() {
-		fail("Not yet implemented");
-	}
-
 }

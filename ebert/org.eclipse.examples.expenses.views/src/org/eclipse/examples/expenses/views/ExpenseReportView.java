@@ -181,8 +181,7 @@ public class ExpenseReportView extends AbstractView {
 	/**
 	 * {@link LineItem}s are sorted in the viewer by two criteria. They are
 	 * first sorted chronologically (earlier to later) by the date. If two line
-	 * items have the same date, they are then sorted by their type (types are
-	 * sorted according to their ordinality (lowest to highest).
+	 * items have the same date, they are then sorted by their type.
 	 * <p>
 	 * It is possible that either or both of the date and type can be
 	 * <code>null</code>, so we need to account for that.
@@ -250,7 +249,7 @@ public class ExpenseReportView extends AbstractView {
 			if (type1 == null && type2 == null) return 0;
 			if (type1 == null) return 1;
 			if (type2 == null) return -1;
-			return type1.compareTo(type2);
+			return type1.getTitle().compareTo(type2.getTitle());
 		}
 	};
 	

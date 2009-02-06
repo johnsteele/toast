@@ -41,7 +41,7 @@ public class ExpenseReportViewTests extends WorkbenchTests {
 		
 		report = new ExpenseReport("My Expense Report");
 		lineItemWithType = new LineItem();
-		lineItemWithType.setType(new ExpenseType("Air fare", 1));
+		lineItemWithType.setType(new ExpenseType("Air fare"));
 		lineItemWithType.setAmount(new CurrencyAmount(10.0, Currency.getInstance("CAD")));
 		lineItemWithType.setComment("Comment");
 		report.addLineItem(lineItemWithType);

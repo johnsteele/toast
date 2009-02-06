@@ -78,7 +78,7 @@ public class LineItemTests extends ObjectWithPropertiesTests {
 
 	@Test
 	public void testSetType() throws Exception {
-		ExpenseType type = new ExpenseType("Air fare", 0);
+		ExpenseType type = new ExpenseType("Air fare");
 		lineItem.setType(type);
 		
 		PropertyChangeEvent propertyChangeEvent = observerQueue.remove();

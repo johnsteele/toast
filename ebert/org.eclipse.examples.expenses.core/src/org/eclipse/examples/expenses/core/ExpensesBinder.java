@@ -24,14 +24,14 @@ public class ExpensesBinder extends ObjectWithProperties implements Serializable
 
 	// TODO Make this more dynamic
 	private static final ExpenseType[] EXPENSE_TYPES = new ExpenseType[] {
-				new ExpenseType("Air Travel", 0),
-				new ExpenseType("Other Travel", 1),
-				new ExpenseType("Hotel",2),
-				new ExpenseType("Employee Meal",3),
-				new ExpenseType("Business Meal",4),
-				new ExpenseType("Hardware",5),
-				new ExpenseType("Software",6),
-				new ExpenseType("Other", 7)
+				new ExpenseType("Air Travel"),
+				new ExpenseType("Other Travel"),
+				new ExpenseType("Hotel"),
+				new ExpenseType("Employee Meal"),
+				new ExpenseType("Business Meal"),
+				new ExpenseType("Hardware"),
+				new ExpenseType("Software"),
+				new ExpenseType("Other")
 			};
 	
 	/**
@@ -46,7 +46,7 @@ public class ExpensesBinder extends ObjectWithProperties implements Serializable
 	 * 
 	 * @return an array of {@link ExpenseType} instances.
 	 */
-	public static ExpenseType[] getTypes() {
+	public static ExpenseType[] getExpenseTypes() {
 		return EXPENSE_TYPES;
 	}
 

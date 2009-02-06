@@ -70,7 +70,7 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 	
 	/**
 	 * The type of the expense. This value should generally be an instance of {@link ExpenseType}
-	 * taken from the {@link ExpensesBinder#getTypes()}. The default value is <code>null</code>.
+	 * taken from the {@link ExpensesBinder#getExpenseTypes()}. The default value is <code>null</code>.
 	 * 
 	 * @see getType
 	 * @see setType
@@ -115,6 +115,7 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 		calendar.set(Calendar.HOUR, 0);
 		calendar.set(Calendar.MINUTE, 0);
 		calendar.set(Calendar.SECOND, 0);
+		calendar.set(Calendar.MILLISECOND, 0);
 		this.date = calendar.getTime();
 	}
 
@@ -167,26 +168,5 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 
 	public double getExchangeRate() {
 		return exchangeRate;
-	}
-
-	private void writeObject(java.io.ObjectOutputStream stream) throws IOException {
-		stream.writeObject(date);
-		stream.writeInt(type == null ? -1 : type.ordinality);
-		stream.writeObject(amount);
-		stream.writeDouble(exchangeRate);
-		stream.writeObject(comment);
-	}
-
-	private void readObject(java.io.ObjectInputStream stream) throws IOException, ClassNotFoundException {
-		date = (Date) stream.readObject();
-		int ordinality = stream.readInt();
-		if (ordinality == -1) {
-			type = null;
-		} else {
-			type = ExpensesBinder.getTypes()[ordinality];
-		}
-		amount = (CurrencyAmount) stream.readObject();
-		exchangeRate = stream.readDouble();
-		comment = (String) stream.readObject();
 	}
 }

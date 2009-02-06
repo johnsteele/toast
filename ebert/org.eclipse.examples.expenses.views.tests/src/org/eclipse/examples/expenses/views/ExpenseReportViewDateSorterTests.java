@@ -70,11 +70,11 @@ public class ExpenseReportViewDateSorterTests extends WorkbenchTests {
 		
 		lower = new LineItem();
 		lower.setDate(calendar.getTime());
-		lower.setType(new ExpenseType("lower", 0));
+		lower.setType(new ExpenseType("a"));
 		
 		higher = new LineItem();
 		higher.setDate(calendar.getTime());
-		higher.setType(new ExpenseType("higher", 1));
+		higher.setType(new ExpenseType("b"));
 	}
 	
 	@Test
@@ -121,11 +121,11 @@ public class ExpenseReportViewDateSorterTests extends WorkbenchTests {
 	public void testCompareLowerWithHigherTypeAndNullDate() throws Exception {
 		lower = new LineItem();
 		lower.setDate(null);
-		lower.setType(new ExpenseType("lower", 0));
+		lower.setType(new ExpenseType("a"));
 		
 		higher = new LineItem();
 		higher.setDate(null);
-		higher.setType(new ExpenseType("higher", 1));
+		higher.setType(new ExpenseType("b"));
 		
 		assertEquals(-1, sorter.compare(null, lower, higher));
 	}

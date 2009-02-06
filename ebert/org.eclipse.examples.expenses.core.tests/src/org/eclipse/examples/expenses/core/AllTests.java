@@ -9,8 +9,7 @@ import org.junit.runners.Suite.SuiteClasses;
 @SuiteClasses( { 
 	BinderTests.class,
 	ExpenseReportTests.class,
-	LineItemTests.class,
-	ExpenseTypeTests.class
+	LineItemTests.class
 })
 
 public class AllTests {

@@ -318,7 +318,7 @@ public class LineItemView extends AbstractView {
 				return ((ExpenseType)element).getTitle();
 			}
 		});
-		typeDropdown.setInput(ExpensesBinder.getTypes());
+		typeDropdown.setInput(ExpensesBinder.getExpenseTypes());
 		typeDropdown.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				if (lineItem == null) return;
