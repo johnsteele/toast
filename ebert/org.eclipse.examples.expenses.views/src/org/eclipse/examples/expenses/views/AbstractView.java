@@ -10,10 +10,14 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.views;
 
+import org.eclipse.examples.expenses.context.IUserContext;
+import org.eclipse.examples.expenses.context.IUserContextService;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
-import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
+import org.eclipse.examples.expenses.views.model.ViewModel;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.part.ViewPart;
+import org.osgi.framework.ServiceReference;
+import org.osgi.util.tracker.ServiceTracker;
 
 import com.ibm.icu.util.ULocale;
 
@@ -44,18 +48,6 @@ public abstract class AbstractView extends ViewPart {
 	protected void syncExec(Runnable runnable) {
 		getViewSite().getWorkbenchWindow().getShell().getDisplay().syncExec(runnable);
 	}
-
-	/**
-	 * This method obtains the UI Model from the activator.
-	 * 
-	 * @see ExpenseReportingUI#getExpenseReportingViewModel()
-	 * 
-	 * @return An instance of a class that implements {@link IExpenseReportingUIModel} 
-	 * that is appropriate for the current user.
-	 */
-	protected ExpenseReportingViewModel getExpenseReportingViewModel() {
-		return ExpenseReportingUI.getDefault().getExpenseReportingViewModel();
-	}
 	
 	/**
 	 * This method gets the current user's {@link ULocale}. For an RCP-based application,
@@ -67,7 +59,79 @@ public abstract class AbstractView extends ViewPart {
 	 * @see ULocale#getDefault()
 	 * @return
 	 */
-	ULocale getUserLocale() {
-		return getExpenseReportingViewModel().getUserLocale();
+	protected ULocale getUserLocale() {
+		if (userContext == null) return ULocale.getDefault();
+		return userContext.getUserLocale();
 	}
+
+	IUserContext userContext;
+	ServiceTracker userContextServiceTracker;
+	
+	protected ViewModel getViewModel() {
+		if (userContext == null) return null;
+		return userContext.getViewModel();
+	}
+	
+	protected void startUserContextServiceTracker() {
+		userContextServiceTracker = new ServiceTracker(ExpenseReportingUI.getDefault().getContext(), IUserContextService.class.getName(), null) {
+			/**
+			 * We keep track of the first service we find and ignore the
+			 * rest. This is a great example of where declarative services
+			 * would be helpful: you can declare that you want exactly one
+			 * instance of a service and that's what you get. 
+			 */
+			protected IUserContextService userContextService;
+			
+			/**
+			 * This method is called when a matching service is found or
+			 * added. This finds both pre-existing and new instances of the
+			 * service.
+			 */
+			public Object addingService(ServiceReference reference) {
+				Object service = super.addingService(reference);
+				if (userContextService == null) {
+					userContextService = (IUserContextService)service;
+					/*
+					 * Do the part where we get the user context in a
+					 * syncExec block. This will make sure that it runs
+					 * in the user interface thread for the current user.
+					 * This doesn't matter too much on RCP/eRCP, but the
+					 * thread that we're running in is pretty critical
+					 * in RAP.
+					 */
+					syncExec(new Runnable() {
+						public void run() {
+							userContext = userContextService.getUserContext();
+							connectToUserContext(userContext);
+						}
+					});
+				}
+				return service;
+			}
+			
+			/**
+			 * This method is called when the service is being removed, or the 
+			 * tracker is being closed.
+			 */
+			public void removedService(ServiceReference reference, Object service) {
+				if (service == userContextService) {
+					disconnectFromUserContext(userContext);
+					userContext = null;
+					userContextService = null;
+					// TODO Do we try to match up with a hypothetical second service in this case?
+				}
+				super.removedService(reference, service);
+			};
+			
+			
+		};
+		userContextServiceTracker.open();
+	}
+	
+	protected void stopUserContextServiceTracker() {
+		userContextServiceTracker.close();
+	}
+	
+	protected void connectToUserContext(IUserContext userContext) {};
+	protected void disconnectFromUserContext(IUserContext userContext) {};
 }

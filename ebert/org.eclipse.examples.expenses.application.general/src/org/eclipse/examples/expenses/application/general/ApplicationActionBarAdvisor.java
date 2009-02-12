@@ -26,11 +26,8 @@ import org.eclipse.ui.application.IActionBarConfigurer;
  */
 public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 
-	private final ApplicationStateManager applicationStateManager;
-
-	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer, ApplicationStateManager applicationStateManager) {
+	public ApplicationActionBarAdvisor(IActionBarConfigurer configurer) {
 		super(configurer);
-		this.applicationStateManager = applicationStateManager;
 	}
 	
 	// Actions - important to allocate these only in makeActions, and then use
@@ -65,7 +62,7 @@ public class ApplicationActionBarAdvisor extends ActionBarAdvisor {
 		
 		@Override
 		public void run() {
-			applicationStateManager.save();
+			// TODO Need to introduce some notion of state. See bug 259513
 		}
 		
 		public void dispose() {		

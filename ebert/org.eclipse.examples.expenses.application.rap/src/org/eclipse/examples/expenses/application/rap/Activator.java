@@ -10,33 +10,22 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.application.rap;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.ObjectInputStream;
-
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Plugin;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.examples.expenses.core.ExpensesBinder;
+import org.eclipse.examples.expenses.context.IUserContextService;
+import org.eclipse.examples.expenses.context.rap.RapUserContextService;
+import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 
-public class Activator extends Plugin {
-
-	private static final String ID = "org.eclipse.examples.application.rap";
-	static Activator instance;
-
-	public Activator() {
-		instance = this;
-	}
-
-	public static Activator getDefault() {
-		return instance;
-	}
+public class Activator implements BundleActivator {
+	private RapUserContextService userContextService;
+	private ServiceRegistration serviceRegistration;
 	
-	@Override
 	public void start(BundleContext context) throws Exception {
-		super.start(context);
+		userContextService = new RapUserContextService();
+		serviceRegistration = context.registerService(IUserContextService.class.getName(), userContextService, null);
 	}
 
+	public void stop(BundleContext context) throws Exception {
+		serviceRegistration.unregister();
+	}
 }

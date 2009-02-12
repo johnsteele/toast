@@ -8,25 +8,16 @@
  * Contributors:
  *    The Eclipse Foundation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.examples.expenses.core;
+package org.eclipse.examples.expenses.views.model;
 
-import org.eclipse.core.runtime.Plugin;
-import org.osgi.framework.BundleContext;
+import org.eclipse.examples.expenses.core.ExpenseReport;
+import org.eclipse.examples.expenses.core.ExpensesBinder;
+import org.eclipse.examples.expenses.core.LineItem;
 
-public class ExpensesCoreActivator extends Plugin {
-	static ExpensesCoreActivator instance;
+public interface IViewModelListener {
 
-	public void start(BundleContext context) throws Exception {
-		super.start(context);
-		instance = this;
-	}
-		
-	public void stop(BundleContext context) throws Exception {
-		instance = null;
-		super.stop(context);
-	}
+	void binderChanged(ExpensesBinder binder);
+	void reportChanged(ExpenseReport report);
+	void lineItemChanged(LineItem item);
 
-	public static ExpensesCoreActivator getDefault() {
-		return instance;
-	}
 }

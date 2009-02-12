@@ -10,8 +10,6 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.application.general;
 
-import org.eclipse.examples.expenses.core.ExpensesBinder;
-import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
 import org.eclipse.swt.graphics.Point;
 import org.eclipse.ui.application.ActionBarAdvisor;
 import org.eclipse.ui.application.IActionBarConfigurer;
@@ -22,16 +20,12 @@ import org.eclipse.ui.application.WorkbenchWindowAdvisor;
  * Configures the initial size and appearance of a workbench window.
  */
 public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
-
-	private final ApplicationStateManager applicationStateManager;
-
-	public ApplicationWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer, ApplicationStateManager applicationStateManager) {
+	public ApplicationWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer) {
         super(configurer);
-		this.applicationStateManager = applicationStateManager;
     }
 
     public ActionBarAdvisor createActionBarAdvisor(IActionBarConfigurer configurer) {
-        return new ApplicationActionBarAdvisor(configurer, applicationStateManager);
+        return new ApplicationActionBarAdvisor(configurer);
     }
     
     public void preWindowOpen() {
@@ -43,7 +37,6 @@ public class ApplicationWorkbenchWindowAdvisor extends WorkbenchWindowAdvisor {
     }
 	
 	public void postWindowCreate() {
-		ExpensesBinder binder = applicationStateManager.getBinder();
-		ExpenseReportingUI.getDefault().getExpenseReportingViewModel().setBinder(binder);
+
 	}
 }

@@ -44,15 +44,15 @@ public class ViewCustomizer implements IViewCustomizer {
 	void customizeBinderView(Composite parent, final BinderView binderView) {
 		addEditButton(binderView);
 		
-		updateButtons(binderView.getViewer());
+		updateButtons(binderView.getExpenseReportViewer());
 		
-		binderView.getViewer().addSelectionChangedListener(new ISelectionChangedListener() {
+		binderView.getExpenseReportViewer().addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
-				updateButtons(binderView.getViewer());
+				updateButtons(binderView.getExpenseReportViewer());
 			}			
 		});
 		
-		final Command selectCommand = new Command(binderView.getViewer().getControl(), Command.SELECT, 1);
+		final Command selectCommand = new Command(binderView.getExpenseReportViewer().getControl(), Command.SELECT, 1);
 		selectCommand.setText("Open");
 		selectCommand.addSelectionListener(new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent arg0) {				
@@ -63,7 +63,7 @@ public class ViewCustomizer implements IViewCustomizer {
 			}			
 		});
 		
-		binderView.getViewer().getControl().addDisposeListener(new DisposeListener() {
+		binderView.getExpenseReportViewer().getControl().addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent arg0) {
 				selectCommand.dispose();
 			}			
@@ -74,7 +74,7 @@ public class ViewCustomizer implements IViewCustomizer {
 		addEditButton(view);
 		addBackButton(view.getButtonArea(), parent, view);
 
-		final Command selectCommand = new Command(view.getViewer().getControl(), Command.SELECT, 1);
+		final Command selectCommand = new Command(view.getExpenseReportViewer().getControl(), Command.SELECT, 1);
 		selectCommand.setText("Edit");
 		selectCommand.addSelectionListener(new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent arg0) {				
@@ -85,7 +85,7 @@ public class ViewCustomizer implements IViewCustomizer {
 			}			
 		});
 		
-		view.getViewer().getControl().addDisposeListener(new DisposeListener() {
+		view.getExpenseReportViewer().getControl().addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent arg0) {
 				selectCommand.dispose();
 			}			
@@ -140,7 +140,7 @@ public class ViewCustomizer implements IViewCustomizer {
 	}
 
 	void editExpenseReport(final BinderView view) {
-		IStructuredSelection selection = (IStructuredSelection) view.getViewer().getSelection();
+		IStructuredSelection selection = (IStructuredSelection) view.getExpenseReportViewer().getSelection();
 		if (selection.isEmpty()) return;
 		ExpenseReport report = (ExpenseReport) selection.getFirstElement();
 		try {
@@ -166,7 +166,7 @@ public class ViewCustomizer implements IViewCustomizer {
 	}
 
 	private void editLineItem(final AbstractView view) {
-		IStructuredSelection selection = (IStructuredSelection) view.getViewer().getSelection();
+		IStructuredSelection selection = (IStructuredSelection) view.getExpenseReportViewer().getSelection();
 		if (selection.isEmpty()) return;
 		LineItem lineItem = (LineItem) selection.getFirstElement();
 		try {

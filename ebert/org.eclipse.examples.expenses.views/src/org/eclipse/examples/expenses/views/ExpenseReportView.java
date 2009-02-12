@@ -16,13 +16,15 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.examples.expenses.context.IUserContext;
 import org.eclipse.examples.expenses.core.CollectionPropertyChangeEvent;
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
-import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModelListener;
+import org.eclipse.examples.expenses.views.model.IViewModelListener;
+import org.eclipse.examples.expenses.views.model.ViewModel;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.IContentProvider;
@@ -32,6 +34,7 @@ import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ITableLabelProvider;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
@@ -255,7 +258,7 @@ public class ExpenseReportView extends AbstractView {
 	
 	private Composite titleArea;
 
-	ExpenseReportingViewModelListener expenseReportingUIModelListener = new ExpenseReportingViewModelListener() {
+	IViewModelListener viewModelListener = new IViewModelListener() {
 		public void reportChanged(ExpenseReport report) {
 			setReport(report);
 		}
@@ -278,12 +281,18 @@ public class ExpenseReportView extends AbstractView {
 		
 		customizeExpenseReportView();
 
-		/*
-		 * Add a listener to the UI Model; should the binder change, we'll update
-		 * ourselves to reflect that change.
-		 */
-		getExpenseReportingViewModel().addListener(expenseReportingUIModelListener);
-		setReport(getExpenseReportingViewModel().getReport());
+		startUserContextServiceTracker();
+	}
+
+	protected void connectToUserContext(IUserContext userContext) {
+		ViewModel viewModel = userContext.getViewModel();
+		viewModel.addListener(viewModelListener);
+		setReport(viewModel.getReport());
+	}
+	
+	protected void disconnectFromUserContext(IUserContext userContext) {
+		userContext.getViewModel().removeListener(viewModelListener);
+		setReport(null);
 	}
 
 	/**
@@ -416,6 +425,13 @@ public class ExpenseReportView extends AbstractView {
 			public void run() {
 				lineItemTableViewer.add(event.added);
 				lineItemTableViewer.remove(event.removed);
+				
+				if (event.added.length > 0) {
+					lineItemTableViewer.setSelection(new StructuredSelection(event.added));
+				} else if (event.removed.length > 0) {
+					// TODO We can be more clever here; if the removed things are in the current selection, select something else
+					lineItemTableViewer.setSelection(StructuredSelection.EMPTY);
+				}
 			}
 			
 		});
@@ -499,10 +515,10 @@ public class ExpenseReportView extends AbstractView {
 		lineItemTableViewer.setLabelProvider(labelProvider);
 		lineItemTableViewer.setSorter(dateSorter);
 	
-		lineItemTableViewer.addSelectionChangedListener(new ISelectionChangedListener() {
+		lineItemTableViewer.addPostSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				IStructuredSelection selection = (IStructuredSelection)event.getSelection();
-				getExpenseReportingViewModel().setLineItem((LineItem) selection.getFirstElement());
+				getViewModel().setLineItem((LineItem) selection.getFirstElement());
 			}			
 		});
 		
@@ -553,8 +569,7 @@ public class ExpenseReportView extends AbstractView {
 	}
 
 	public void dispose() {		
-		getExpenseReportingViewModel().removeListener(expenseReportingUIModelListener);
-		
+		stopUserContextServiceTracker();
 		super.dispose();
 	}
 
@@ -598,6 +613,7 @@ public class ExpenseReportView extends AbstractView {
 	 * This method must be run in the UI thread.
 	 */
 	void handleTitlePropertyChanged() {
+		if (titleText.isDisposed()) return;
 		titleText.setText(expenseReport == null ? "" : expenseReport.getTitle());
 	}
 	
@@ -611,6 +627,7 @@ public class ExpenseReportView extends AbstractView {
 	 * @param expenseReport
 	 */
 	void updateLineItemsTable() {
+		if (lineItemTableViewer.getControl().isDisposed()) return;
 		lineItemTableViewer.setInput(expenseReport);
 		lineItemTableViewer.getTable().setEnabled(expenseReport != null);
 	}

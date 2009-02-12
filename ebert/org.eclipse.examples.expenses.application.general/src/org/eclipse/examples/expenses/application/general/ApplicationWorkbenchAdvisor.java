@@ -15,14 +15,9 @@ import org.eclipse.ui.application.WorkbenchAdvisor;
 import org.eclipse.ui.application.WorkbenchWindowAdvisor;
 
 public class ApplicationWorkbenchAdvisor extends WorkbenchAdvisor {
-	private final ApplicationStateManager applicationStateManager;
-
-	public ApplicationWorkbenchAdvisor(ApplicationStateManager applicationStateManager) {
-		this.applicationStateManager = applicationStateManager;
-	}
 
 	public WorkbenchWindowAdvisor createWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer) {
-		return new ApplicationWorkbenchWindowAdvisor(configurer, applicationStateManager);
+		return new ApplicationWorkbenchWindowAdvisor(configurer);
 	}
 
 	public String getInitialWindowPerspectiveId() {

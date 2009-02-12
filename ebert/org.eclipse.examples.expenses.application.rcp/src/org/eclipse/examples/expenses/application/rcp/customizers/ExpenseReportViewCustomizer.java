@@ -11,7 +11,6 @@
 package org.eclipse.examples.expenses.application.rcp.customizers;
 
 import java.text.DateFormat;
-import java.util.Date;
 
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.views.ExpenseReportViewProxy;
@@ -22,8 +21,6 @@ import org.eclipse.jface.viewers.EditingSupport;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.TextCellEditor;
-import org.eclipse.nebula.widgets.cdatetime.CDT;
-import org.eclipse.nebula.widgets.cdatetime.CDateTimeCellEditor;
 
 public class ExpenseReportViewCustomizer implements
 		IExpenseReportViewCustomizer {
@@ -50,29 +47,30 @@ public class ExpenseReportViewCustomizer implements
 				return dateFormat.format(((LineItem)element).getDate());
 			}
 		});
-		dateColumn.setEditingSupport(new EditingSupport(viewer) {
-
-			@Override
-			protected boolean canEdit(Object element) {
-				return true;
-			}
-
-			@Override
-			protected CellEditor getCellEditor(Object element) {
-				return new CDateTimeCellEditor(viewer.getTable(), CDT.DROP_DOWN);
-			}
-
-			@Override
-			protected Object getValue(Object element) {
-				return ((LineItem)element).getDate();
-			}
-
-			@Override
-			protected void setValue(Object element, Object value) {
-				((LineItem)element).setDate((Date)value);
-			}
-			
-		});
+		// TODO Make this work again; Nebula moved CDateTimeCellEditor
+//		dateColumn.setEditingSupport(new EditingSupport(viewer) {
+//
+//			@Override
+//			protected boolean canEdit(Object element) {
+//				return true;
+//			}
+//
+//			@Override
+//			protected CellEditor getCellEditor(Object element) {
+//				return new CDateTimeCellEditor(viewer.getTable(), CDT.DROP_DOWN);
+//			}
+//
+//			@Override
+//			protected Object getValue(Object element) {
+//				return ((LineItem)element).getDate();
+//			}
+//
+//			@Override
+//			protected void setValue(Object element, Object value) {
+//				((LineItem)element).setDate((Date)value);
+//			}
+//			
+//		});
 	}
 
 	void customizeCommentColumn(final TableViewer viewer) {

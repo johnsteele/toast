@@ -12,7 +12,6 @@ package org.eclipse.examples.expenses.application.rap;
 
 import java.io.IOException;
 
-import org.eclipse.examples.expenses.application.general.ApplicationStateManager;
 import org.eclipse.examples.expenses.application.general.ApplicationWorkbenchAdvisor;
 import org.eclipse.examples.expenses.application.general.ApplicationWorkbenchWindowAdvisor;
 import org.eclipse.examples.expenses.application.general.LoginDialog;
@@ -74,11 +73,10 @@ public class ExpenseReporting implements IEntryPoint {
 	}
 
 	ApplicationWorkbenchAdvisor createApplicationWorkbenchAdvisor(final String userId) {
-		final ApplicationStateManager applicationStateManager = new ApplicationStateManager(userId);
-		return new ApplicationWorkbenchAdvisor(applicationStateManager) {
+		return new ApplicationWorkbenchAdvisor() {
 			@Override
 			public WorkbenchWindowAdvisor createWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer) {
-				return new ApplicationWorkbenchWindowAdvisor(configurer, applicationStateManager) {
+				return new ApplicationWorkbenchWindowAdvisor(configurer) {
 					public void preWindowOpen() {
 						super.preWindowOpen();
 						IWorkbenchWindowConfigurer windowConfigurer = getWindowConfigurer();

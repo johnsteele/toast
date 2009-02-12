@@ -13,13 +13,14 @@ package org.eclipse.examples.expenses.views;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.examples.expenses.context.IUserContext;
 import org.eclipse.examples.expenses.core.CollectionPropertyChangeEvent;
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
-import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModel;
-import org.eclipse.examples.expenses.views.model.ExpenseReportingViewModelListener;
+import org.eclipse.examples.expenses.views.model.IViewModelListener;
+import org.eclipse.examples.expenses.views.model.ViewModel;
 import org.eclipse.jface.util.IPropertyChangeListener;
 import org.eclipse.jface.util.PropertyChangeEvent;
 import org.eclipse.jface.viewers.ISelectionChangedListener;
@@ -47,9 +48,7 @@ import org.eclipse.swt.widgets.Composite;
  * @see ExpensesBinder
  * @see AbstractView
  */
-public class BinderView extends AbstractView {
-
-	
+public class BinderView extends AbstractView {	
 	/**
 	 * This value is the id of the extension that defines this view.
 	 * The fully qualified name of this class just happens to share the same name,
@@ -164,7 +163,7 @@ public class BinderView extends AbstractView {
 		}		
 	};
 
-	ExpenseReportingViewModelListener expenseReportingUIModelListener = new ExpenseReportingViewModelListener() {
+	IViewModelListener viewModelListener = new IViewModelListener() {
 		public void binderChanged(ExpensesBinder binder) {
 			setBinder(binder);
 		}
@@ -198,22 +197,28 @@ public class BinderView extends AbstractView {
 	 * This method, while public is <em>not</em> part of the public API. This
 	 * method is called as part of the part creation process by the framework.
 	 */
-	public void createPartControl(final Composite parent) {
+	public void createPartControl(final Composite parent) {		
 		parent.setLayout(new GridLayout(1, true));
 		createExpenseReportViewer(parent);
 
 		customizeBinderView(parent);
+			
+		setBinder(null);
 		
-		/*
-		 * Add a listener to the UI Model; should the binder change, we'll update
-		 * ourselves to reflect that change.
-		 */
-		getExpenseReportingViewModel().addListener(expenseReportingUIModelListener);
-		setBinder(getExpenseReportingViewModel().getBinder());
-		
-		expenseReportViewer.setInput(getBinder());
+		startUserContextServiceTracker();
 	}
 
+	protected void connectToUserContext(IUserContext userContext) {
+		ViewModel viewModel = userContext.getViewModel();
+		viewModel.addListener(viewModelListener);
+		setBinder(viewModel.getBinder());
+	}
+	
+	protected void disconnectFromUserContext(IUserContext userContext) {
+		userContext.getViewModel().removeListener(viewModelListener);
+		setBinder(null);
+	}
+	
 	void customizeBinderView(final Composite parent) {
 		BinderViewProxy proxy = new BinderViewProxy(this);
 		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(IBinderViewCustomizer.EXTENSION_POINT_ID);
@@ -234,7 +239,7 @@ public class BinderView extends AbstractView {
 		expenseReportViewer.addSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
 				IStructuredSelection selection = (IStructuredSelection)event.getSelection();
-				getExpenseReportingViewModel().setReport((ExpenseReport) selection.getFirstElement());
+				getViewModel().setReport((ExpenseReport) selection.getFirstElement());
 			}			
 		});
 		getSite().setSelectionProvider(expenseReportViewer);
@@ -245,7 +250,7 @@ public class BinderView extends AbstractView {
 	 * This method is <em>not</em> part of the public API.
 	 */
 	public void dispose() {
-		getExpenseReportingViewModel().removeListener(expenseReportingUIModelListener);
+		stopUserContextServiceTracker();
 		super.dispose();
 	}
 
@@ -300,15 +305,17 @@ public class BinderView extends AbstractView {
 		asyncExec(new Runnable() {
 			public void run() {
 				setEnabled(expensesBinder != null);
+				if (expenseReportViewer.getControl().isDisposed()) return;
 				expenseReportViewer.setInput(expensesBinder);
 			}			
 		});
 	}
 
 	private void setEnabled(boolean enabled) {
-		expenseReportViewer.getControl().getParent().setEnabled(enabled);
+		if (expenseReportViewer.getControl().isDisposed()) return;
+		Composite parent = expenseReportViewer.getControl().getParent();
+		if (!parent.isDisposed()) parent.setEnabled(enabled);
 	}
-
 
 	Composite buttonArea;
 	

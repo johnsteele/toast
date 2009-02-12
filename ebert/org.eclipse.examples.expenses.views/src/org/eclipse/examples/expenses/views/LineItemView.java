@@ -17,12 +17,16 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.eclipse.examples.expenses.context.IUserContext;
+import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.ui.fields.currency.IMoneyChangeListener;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyChangeEvent;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyField;
+import org.eclipse.examples.expenses.views.model.IViewModelListener;
+import org.eclipse.examples.expenses.views.model.ViewModel;
 import org.eclipse.examples.expenses.widgets.datefield.DateField;
 import org.eclipse.examples.expenses.widgets.datefield.common.DateChangeEvent;
 import org.eclipse.examples.expenses.widgets.datefield.common.IDateChangeListener;
@@ -45,9 +49,6 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.ISelectionService;
-import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.ViewPart;
 
 import com.ibm.icu.util.CurrencyAmount;
@@ -144,12 +145,17 @@ public class LineItemView extends AbstractView {
 	 */
 	NumberFormat exchangeRateFormat = NumberFormat.getInstance();	
 	
-	ISelectionListener selectionListener = new ISelectionListener() {
-		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
-			handleSelection(selection);
-		}	
-	};
+	IViewModelListener viewModelListener = new IViewModelListener() {
+		public void binderChanged(ExpensesBinder binder) {
+		}
 
+		public void lineItemChanged(LineItem item) {
+			setLineItem(item);
+		}
+
+		public void reportChanged(ExpenseReport report) {}
+	};
+	
 	/**
 	 * Instances of the {@link FieldStateHandler} class are used to manage the state
 	 * of the fields. One instance of this class is created for each field. One of
@@ -211,37 +217,28 @@ public class LineItemView extends AbstractView {
 		
 		createCommentLabel(parent);
 		createCommentField(parent);
-		
-//		Composite buttons = createButtonArea(parent);
-//		GridData layoutData = new GridData(SWT.FILL, SWT.FILL, true, false);
-//		layoutData.horizontalSpan = 2;
-//		buttons.setLayoutData(layoutData);
-		
+				
 		update();
-		
-		hookSelectionListener();
-		
-//		customizeView(parent);
+				
+		startUserContextServiceTracker();		
 	}
 
 
 	public void dispose() {
-		unhookListeners(lineItem);
-		unhookSelectionListener();
+		stopUserContextServiceTracker();
 	}
 	
-	void unhookSelectionListener() {
-		ISelectionService selectionService = getSite().getWorkbenchWindow().getSelectionService();
-		if (selectionService == null) return;
-		selectionService.removeSelectionListener(selectionListener);
-	}
-
-	void hookSelectionListener() {
-		ISelectionService selectionService = getSite().getWorkbenchWindow().getSelectionService();
-		if (selectionService == null) return;
-		selectionService.addSelectionListener(selectionListener);
+	protected void connectToUserContext(IUserContext userContext) {
+		ViewModel viewModel = userContext.getViewModel();
+		viewModel.addListener(viewModelListener);
+		setLineItem(viewModel.getLineItem());
 	}
 	
+	protected void disconnectFromUserContext(IUserContext userContext) {
+		userContext.getViewModel().removeListener(viewModelListener);
+		setLineItem(null);
+	}
+		
 	protected void createDateLabel(Composite parent) {
 		Label dateLabel = new Label(parent, SWT.NONE);
 		dateLabel.setText("Date:");			

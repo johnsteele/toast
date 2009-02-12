@@ -263,7 +263,11 @@ public class MoneyField extends Composite {
 	
 	void updateMoneyAndNotify() {
 		CurrencyAmount oldMoney = money;
-		money = new CurrencyAmount(amount, currency);
+		if (currency != null) {
+			money = new CurrencyAmount(amount, currency);
+		} else {
+			money = null;
+		}
 		if (valueListeners == null) return;
 		Object[] listeners = valueListeners.getListeners();
 		if (listeners.length == 0) return;
