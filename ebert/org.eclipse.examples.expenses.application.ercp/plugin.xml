@@ -17,4 +17,16 @@
             class="org.eclipse.examples.expenses.application.ercp.ViewCustomizer">
       </customizer>
    </extension>
+   <extension
+         point="org.eclipse.examples.expenses.views.binderViewCustomizers">
+      <customizer
+            class="org.eclipse.examples.expenses.application.ercp.customizers.BinderViewCustomizer">
+      </customizer>
+   </extension>
+   <extension
+         point="org.eclipse.examples.expenses.views.expenseReportViewCustomizers">
+      <customizer
+            class="org.eclipse.examples.expenses.application.ercp.customizers.ExpenseReportViewCustomizer">
+      </customizer>
+   </extension>
 </plugin>

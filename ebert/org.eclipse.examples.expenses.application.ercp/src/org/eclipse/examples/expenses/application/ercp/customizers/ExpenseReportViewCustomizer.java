@@ -11,11 +11,12 @@
 package org.eclipse.examples.expenses.application.ercp.customizers;
 
 import org.eclipse.ercp.swt.mobile.Command;
-import org.eclipse.examples.expenses.core.ExpenseReport;
+import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.views.BinderView;
 import org.eclipse.examples.expenses.views.BinderViewProxy;
-import org.eclipse.examples.expenses.views.ExpenseReportView;
-import org.eclipse.examples.expenses.views.IBinderViewCustomizer;
+import org.eclipse.examples.expenses.views.ExpenseReportViewProxy;
+import org.eclipse.examples.expenses.views.IExpenseReportViewCustomizer;
+import org.eclipse.examples.expenses.views.LineItemView;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
@@ -24,24 +25,14 @@ import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.PartInitException;
 
-/**
- * Instances of this class customize a {@link BinderView}. In the ERCP
- * case, {@link Command}s are added. The notion of Command varies from
- * phone to phone, but tends to manifest as buttons around the display.
- * We define buttons to add, remove, and edit {@link ExpenseReport} 
- * instances displayed by the view. In the case of the edit command, we
- * provide navigation which brings the {@link ExpenseReportView} to
- * the top (in ERCP, we can only show one view at a time). 
- * 
- * @see IBinderViewCustomizer
- */
-public class BinderViewCustomizer implements IBinderViewCustomizer {
+public class ExpenseReportViewCustomizer implements	IExpenseReportViewCustomizer {
 
-	private BinderViewProxy proxy;
+	private ExpenseReportViewProxy proxy;
 	private Command addCommand;
 	private Command removeCommand;
 	private Command editCommand;
-	
+	private Command backCommand;
+
 	/**
 	 * This method is called at the end of the {@link BinderView} 
 	 * creation process.
@@ -52,13 +43,14 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 	 *            instance of {@link BinderViewProxy} that represents the
 	 *            BinderView we're customizing.
 	 */
-	public void postCreateBinderView(BinderViewProxy proxy) {
+	public void postCreateExpenseReportView(ExpenseReportViewProxy proxy) {
 		this.proxy = proxy;
-		
+
 		createAddCommand();
 		createRemoveCommand();
 		createEditCommand();
-		
+		createBackCommand();
+
 		createDisposeListener(proxy);
 	}
 
@@ -70,13 +62,14 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 	 *            instance of {@link BinderViewProxy} that represents the
 	 *            BinderView we're customizing.
 	 */
-	void createDisposeListener(BinderViewProxy proxy) {
-		proxy.getExpenseReportViewer().getControl().getParent().addDisposeListener(new DisposeListener() {
+	void createDisposeListener(ExpenseReportViewProxy proxy) {
+		proxy.getLineItemViewer().getControl().getParent().addDisposeListener(new DisposeListener() {
 			public void widgetDisposed(DisposeEvent arg0) {
 				addCommand.dispose();
 				removeCommand.dispose();
 				editCommand.dispose();
-			}			
+				backCommand.dispose();
+			}
 		});
 	}
 
@@ -88,7 +81,7 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 			}
 
 			public void widgetSelected(SelectionEvent arg0) {
-				proxy.createExpenseReport();
+				proxy.createLineItem();
 			}			
 		});
 	}
@@ -101,7 +94,7 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 			}
 
 			public void widgetSelected(SelectionEvent arg0) {
-				proxy.removeExpenseReports();
+				proxy.removeLineItems();
 			}			
 		});
 	}
@@ -114,25 +107,42 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 			}
 
 			public void widgetSelected(SelectionEvent arg0) {
-				editExpenseReport();
+				editLineItem();
 			}			
 		});
 	}
-	
-	void editExpenseReport() {		
-		IStructuredSelection selection = (IStructuredSelection) proxy.getExpenseReportViewer().getSelection();
+
+	void createBackCommand() {
+		backCommand = new Command(getParent(), Command.BACK, 1);
+		backCommand.setText("Back");
+		backCommand.addSelectionListener(new SelectionListener() {
+			public void widgetDefaultSelected(SelectionEvent arg0) {				
+			}
+
+			public void widgetSelected(SelectionEvent arg0) {
+				try {
+					proxy.getPage().showView(BinderView.ID);
+				} catch (PartInitException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}			
+		});
+	}	
+	void editLineItem() {		
+		IStructuredSelection selection = (IStructuredSelection) proxy.getLineItemViewer().getSelection();
 		if (selection.isEmpty()) return;
-		ExpenseReport report = (ExpenseReport) selection.getFirstElement();
+		LineItem lineItem = (LineItem) selection.getFirstElement();
 		try {
-			ExpenseReportView expenseReportView = (ExpenseReportView) proxy.getPage().showView(ExpenseReportView.ID);
-			expenseReportView.setReport(report);
+			LineItemView lineItemView = (LineItemView) proxy.getPage().showView(LineItemView.ID);
+			lineItemView.setLineItem(lineItem);
 		} catch (PartInitException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}	
-	
+		
 	private Control getParent() {
-		return proxy.getExpenseReportViewer().getControl().getParent();
+		return proxy.getLineItemViewer().getControl().getParent();
 	}
 }
