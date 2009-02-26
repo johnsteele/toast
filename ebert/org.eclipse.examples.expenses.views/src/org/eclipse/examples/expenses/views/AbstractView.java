@@ -115,15 +115,17 @@ public abstract class AbstractView extends ViewPart {
 			 */
 			public void removedService(ServiceReference reference, Object service) {
 				if (service == userContextService) {
-					disconnectFromUserContext(userContext);
+					syncExec(new Runnable() {
+						public void run() {
+							disconnectFromUserContext(userContext);
+						}
+					});
 					userContext = null;
 					userContextService = null;
 					// TODO Do we try to match up with a hypothetical second service in this case?
 				}
 				super.removedService(reference, service);
-			};
-			
-			
+			};			
 		};
 		userContextServiceTracker.open();
 	}
@@ -132,6 +134,29 @@ public abstract class AbstractView extends ViewPart {
 		userContextServiceTracker.close();
 	}
 	
+	/**
+	 * An {@link IUserContext} has become available, connect to it. 
+	 * This gives the instance an opportunity to configure itself for a user.
+	 * Since the service which provides this context can potentially be started
+	 * at any time, we cannot depend on it being available before we
+	 * open the view.
+	 * <p>
+	 * This method is invoked in the UI thread. It should not be directly 
+	 * invoked by clients.
+	 * 
+	 * @param userContext instance of {@link IUserContext}
+	 */
 	protected void connectToUserContext(IUserContext userContext) {};
+	
+	/**
+	 * The instance of {@link IUserContext} that we depend upon is going
+	 * away and we need to disconnect from it.
+	 * <p>
+	 * This method is invoked in the UI thread. It should not be directly 
+	 * invoked by clients.
+	 * 
+	 * @see #connectToUserContext(IUserContext)
+	 * @param userContext
+	 */
 	protected void disconnectFromUserContext(IUserContext userContext) {};
 }

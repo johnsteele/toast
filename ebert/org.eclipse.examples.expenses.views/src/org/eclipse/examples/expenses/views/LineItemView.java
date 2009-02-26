@@ -149,8 +149,12 @@ public class LineItemView extends AbstractView {
 		public void binderChanged(ExpensesBinder binder) {
 		}
 
-		public void lineItemChanged(LineItem item) {
-			setLineItem(item);
+		public void lineItemChanged(final LineItem item) {
+			syncExec(new Runnable() {
+				public void run() {
+					setLineItem(item);
+				};
+			});			
 		}
 
 		public void reportChanged(ExpenseReport report) {}
