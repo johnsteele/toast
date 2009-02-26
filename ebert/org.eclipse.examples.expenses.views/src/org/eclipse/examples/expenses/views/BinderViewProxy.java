@@ -15,6 +15,7 @@ import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.IWorkbenchPage;
 
 /**
  * This class provides privileged access to an instance of {@link BinderView}. It
@@ -65,5 +66,9 @@ public class BinderViewProxy {
 	public void createExpenseReport() {
 		if (getBinder() == null) return;
 		getBinder().addExpenseReport(new ExpenseReport("New Expense Report"));
+	}
+
+	public IWorkbenchPage getPage() {
+		return binderView.getSite().getPage();
 	}
 }
