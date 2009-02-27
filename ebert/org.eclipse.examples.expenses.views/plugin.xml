@@ -4,6 +4,7 @@
    <extension-point id="viewCustomizers" name="View Customizers" schema="schema/viewCustomizers.exsd"/>
    <extension-point id="binderViewCustomizers" name="Binder View Customizers" schema="schema/binderViewCustomizers.exsd"/>
    <extension-point id="expenseReportViewCustomizers" name="Expense Report View Customizers" schema="schema/expenseReportViewCustomizers.exsd"/>
+   <extension-point id="lineItemViewCustomizers" name="Line Item View Customizers" schema="schema/lineItemViewCustomizers.exsd"/>
    <extension
          point="org.eclipse.ui.views">
       <view

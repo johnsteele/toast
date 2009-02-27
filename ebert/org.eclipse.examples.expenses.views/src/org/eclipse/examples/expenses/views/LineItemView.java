@@ -17,11 +17,15 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.eclipse.core.runtime.CoreException;
+import org.eclipse.core.runtime.IConfigurationElement;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.examples.expenses.context.IUserContext;
 import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpenseType;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.core.LineItem;
+import org.eclipse.examples.expenses.ui.ExpenseReportingUI;
 import org.eclipse.examples.expenses.ui.fields.currency.IMoneyChangeListener;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyChangeEvent;
 import org.eclipse.examples.expenses.ui.fields.currency.MoneyField;
@@ -222,6 +226,8 @@ public class LineItemView extends AbstractView {
 		createCommentLabel(parent);
 		createCommentField(parent);
 				
+		customizeLineItemView();
+		
 		update();
 				
 		startUserContextServiceTracker();		
@@ -232,6 +238,30 @@ public class LineItemView extends AbstractView {
 		stopUserContextServiceTracker();
 	}
 	
+	/**
+	 * This method finds and invokes <code>lineItemViewCustomizers</code> extensions.
+	 * These so-called &quot;customizers&quot; are given an opportunity to customize the
+	 * receiver by adding buttons and other such things.
+	 * <p>
+	 * An instance of {@link LineItemViewProxy}, wrapping the receiver
+	 * is passed to the customizers. This object includes method that provide the
+	 * customizer with access to restricted parts of the receiver.
+	 * 
+	 * @see LineItemViewProxy
+	 * @see ILineItemViewCustomizer
+	 */
+	void customizeLineItemView() {
+		LineItemViewProxy proxy = new LineItemViewProxy(this);
+		IConfigurationElement[] elements = Platform.getExtensionRegistry().getConfigurationElementsFor(ILineItemViewCustomizer.EXTENSION_POINT_ID);
+			for(int index=0;index<elements.length;index++) {
+				try {
+					ILineItemViewCustomizer customizer = (ILineItemViewCustomizer) elements[index].createExecutableExtension("class");
+					customizer.postCreateLineItemView(proxy);
+				} catch (CoreException e) {
+					ExpenseReportingUI.getDefault().getLog().log(e.getStatus());
+				}
+		}
+	}
 	protected void connectToUserContext(IUserContext userContext) {
 		ViewModel viewModel = userContext.getViewModel();
 		viewModel.addListener(viewModelListener);
