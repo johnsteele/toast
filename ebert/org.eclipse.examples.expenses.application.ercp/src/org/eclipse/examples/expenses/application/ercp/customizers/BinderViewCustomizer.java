@@ -21,7 +21,6 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.PartInitException;
 
 /**
@@ -59,6 +58,14 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 		createRemoveCommand();
 		createEditCommand();
 		
+		proxy.getExpenseReportViewer().getList().addSelectionListener(new SelectionListener() {
+			public void widgetDefaultSelected(SelectionEvent arg0) {
+				editExpenseReport();
+			}
+
+			public void widgetSelected(SelectionEvent arg0) {
+			}			
+		});
 		createDisposeListener(proxy);
 	}
 
@@ -81,7 +88,7 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 	}
 
 	void createAddCommand() {
-		addCommand = new Command(getParent(), Command.GENERAL, 1);
+		addCommand = new Command(proxy.getParent(), Command.GENERAL, 1);
 		addCommand.setText("Add");
 		addCommand.addSelectionListener(new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent arg0) {				
@@ -89,12 +96,13 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 
 			public void widgetSelected(SelectionEvent arg0) {
 				proxy.createExpenseReport();
+				editExpenseReport();
 			}			
 		});
 	}
 
 	void createRemoveCommand() {
-		removeCommand = new Command(getParent(), Command.DELETE, 1);
+		removeCommand = new Command(proxy.getParent(), Command.DELETE, 1);
 		removeCommand.setText("Remove");
 		removeCommand.addSelectionListener(new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent arg0) {				
@@ -107,7 +115,7 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 	}
 
 	void createEditCommand() {
-		editCommand = new Command(getParent(), Command.OK, 1);
+		editCommand = new Command(proxy.getParent(), Command.OK, 1);
 		editCommand.setText("Edit");
 		editCommand.addSelectionListener(new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent arg0) {				
@@ -131,8 +139,4 @@ public class BinderViewCustomizer implements IBinderViewCustomizer {
 			e.printStackTrace();
 		}
 	}	
-	
-	private Control getParent() {
-		return proxy.getExpenseReportViewer().getControl().getParent();
-	}
 }

@@ -71,4 +71,8 @@ public class BinderViewProxy {
 	public IWorkbenchPage getPage() {
 		return binderView.getSite().getPage();
 	}
+
+	public Composite getParent() {
+		return getExpenseReportViewer().getControl().getParent();
+	}
 }

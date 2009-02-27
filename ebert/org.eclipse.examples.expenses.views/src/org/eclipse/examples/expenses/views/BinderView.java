@@ -29,6 +29,7 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.LabelProvider;
 import org.eclipse.jface.viewers.ListViewer;
 import org.eclipse.jface.viewers.SelectionChangedEvent;
+import org.eclipse.jface.viewers.StructuredSelection;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
@@ -128,8 +129,8 @@ public class BinderView extends AbstractView {
 				 * This implementation is a bit like using a sledgehammer to
 				 * hammer in a finishing nail; refreshing the entire viewer and
 				 * hooking listeners on objects that very likely already have
-				 * listeners on them is... excessive. However, in the absense of
-				 * more information, there really is listte more that we can do
+				 * listeners on them is... excessive. However, in the absence of
+				 * more information, there really is little more that we can do
 				 * than to refresh the viewer
 				 */ 
 				expenseReportViewer.refresh();
@@ -157,7 +158,13 @@ public class BinderView extends AbstractView {
 			syncExec(new Runnable() {
 				public void run() {
 					expenseReportViewer.add(event.added);
-					expenseReportViewer.remove(event.removed);
+					expenseReportViewer.remove(event.removed);	
+					if (event.added.length > 0) {
+						expenseReportViewer.setSelection(new StructuredSelection(event.added));
+					} else if (event.removed.length > 0) {
+						// TODO We can be more clever here; if the removed things are in the current selection, select something else
+						expenseReportViewer.setSelection(StructuredSelection.EMPTY);
+					}
 				}				
 			});
 		}		

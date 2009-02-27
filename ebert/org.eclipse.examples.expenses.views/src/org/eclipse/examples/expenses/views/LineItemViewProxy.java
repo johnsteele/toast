@@ -10,12 +10,23 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.views;
 
+import org.eclipse.swt.widgets.Composite;
+import org.eclipse.ui.IWorkbenchPage;
+
 public class LineItemViewProxy {
 
 	private final LineItemView lineItemView;
 
 	public LineItemViewProxy(LineItemView lineItemView) {
 		this.lineItemView = lineItemView;
+	}
+
+	public Composite getParent() {
+		return lineItemView.getParent();
+	}
+
+	public IWorkbenchPage getPage() {
+		return lineItemView.getSite().getPage();
 	}
 
 }

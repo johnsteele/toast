@@ -17,6 +17,7 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.swt.layout.RowLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.ui.IWorkbenchPage;
 
 /**
  * This class provides privileged access to an instance of
@@ -98,5 +99,13 @@ public final class ExpenseReportViewProxy {
 		for(int index=0;index<objects.length;index++){
 			getExpenseReport().removeLineItem((LineItem)objects[index]);					
 		}
+	}
+
+	public IWorkbenchPage getPage() {
+		return expenseReportView.getSite().getPage();
+	}
+
+	public Composite getParent() {
+		return getLineItemViewer().getControl().getParent();
 	}
 }

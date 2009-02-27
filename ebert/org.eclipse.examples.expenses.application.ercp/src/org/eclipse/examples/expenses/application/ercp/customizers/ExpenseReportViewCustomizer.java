@@ -14,6 +14,7 @@ import org.eclipse.ercp.swt.mobile.Command;
 import org.eclipse.examples.expenses.core.LineItem;
 import org.eclipse.examples.expenses.views.BinderView;
 import org.eclipse.examples.expenses.views.BinderViewProxy;
+import org.eclipse.examples.expenses.views.ExpenseReportView;
 import org.eclipse.examples.expenses.views.ExpenseReportViewProxy;
 import org.eclipse.examples.expenses.views.IExpenseReportViewCustomizer;
 import org.eclipse.examples.expenses.views.LineItemView;
@@ -22,7 +23,6 @@ import org.eclipse.swt.events.DisposeEvent;
 import org.eclipse.swt.events.DisposeListener;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
-import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.PartInitException;
 
 public class ExpenseReportViewCustomizer implements	IExpenseReportViewCustomizer {
@@ -34,14 +34,14 @@ public class ExpenseReportViewCustomizer implements	IExpenseReportViewCustomizer
 	private Command backCommand;
 
 	/**
-	 * This method is called at the end of the {@link BinderView} 
+	 * This method is called at the end of the {@link ExpenseReportView} 
 	 * creation process.
 	 * <p>
 	 * Our implementation adds some ESWT-specific Commands.
 	 * 
 	 * @param proxy
-	 *            instance of {@link BinderViewProxy} that represents the
-	 *            BinderView we're customizing.
+	 *            instance of {@link ExpenseReportViewProxy} that represents the
+	 *            {@link ExpenseReportView} we're customizing.
 	 */
 	public void postCreateExpenseReportView(ExpenseReportViewProxy proxy) {
 		this.proxy = proxy;
@@ -50,6 +50,15 @@ public class ExpenseReportViewCustomizer implements	IExpenseReportViewCustomizer
 		createRemoveCommand();
 		createEditCommand();
 		createBackCommand();
+		
+		proxy.getLineItemViewer().getTable().addSelectionListener(new SelectionListener() {
+			public void widgetDefaultSelected(SelectionEvent arg0) {
+				editLineItem();
+			}
+
+			public void widgetSelected(SelectionEvent arg0) {
+			}			
+		});
 
 		createDisposeListener(proxy);
 	}
@@ -74,7 +83,7 @@ public class ExpenseReportViewCustomizer implements	IExpenseReportViewCustomizer
 	}
 
 	void createAddCommand() {
-		addCommand = new Command(getParent(), Command.GENERAL, 1);
+		addCommand = new Command(proxy.getParent(), Command.GENERAL, 1);
 		addCommand.setText("Add");
 		addCommand.addSelectionListener(new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent arg0) {				
@@ -82,12 +91,13 @@ public class ExpenseReportViewCustomizer implements	IExpenseReportViewCustomizer
 
 			public void widgetSelected(SelectionEvent arg0) {
 				proxy.createLineItem();
+				editLineItem();
 			}			
 		});
 	}
 
 	void createRemoveCommand() {
-		removeCommand = new Command(getParent(), Command.DELETE, 1);
+		removeCommand = new Command(proxy.getParent(), Command.DELETE, 1);
 		removeCommand.setText("Remove");
 		removeCommand.addSelectionListener(new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent arg0) {				
@@ -100,7 +110,7 @@ public class ExpenseReportViewCustomizer implements	IExpenseReportViewCustomizer
 	}
 
 	void createEditCommand() {
-		editCommand = new Command(getParent(), Command.OK, 1);
+		editCommand = new Command(proxy.getParent(), Command.OK, 1);
 		editCommand.setText("Edit");
 		editCommand.addSelectionListener(new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent arg0) {				
@@ -113,7 +123,7 @@ public class ExpenseReportViewCustomizer implements	IExpenseReportViewCustomizer
 	}
 
 	void createBackCommand() {
-		backCommand = new Command(getParent(), Command.BACK, 1);
+		backCommand = new Command(proxy.getParent(), Command.BACK, 1);
 		backCommand.setText("Back");
 		backCommand.addSelectionListener(new SelectionListener() {
 			public void widgetDefaultSelected(SelectionEvent arg0) {				
@@ -140,9 +150,5 @@ public class ExpenseReportViewCustomizer implements	IExpenseReportViewCustomizer
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}	
-		
-	private Control getParent() {
-		return proxy.getLineItemViewer().getControl().getParent();
 	}
 }

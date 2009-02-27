@@ -206,9 +206,12 @@ public class LineItemView extends AbstractView {
 			handler.propertyChanged(event.getOldValue(), event.getNewValue());
 		}			
 	};
+
+	private Composite parent;
 	
 	
 	public void createPartControl(Composite parent) {
+		this.parent = parent;
 		parent.setLayout(new GridLayout(2, false));
 				
 		createDateLabel(parent);
@@ -529,5 +532,10 @@ public class LineItemView extends AbstractView {
 	void unhookListeners(LineItem lineItem) {
 		if (lineItem == null) return;
 		lineItem.removePropertyChangeListener(propertyChangeListener);
+	}
+
+
+	Composite getParent() {
+		return parent;
 	}
 }
