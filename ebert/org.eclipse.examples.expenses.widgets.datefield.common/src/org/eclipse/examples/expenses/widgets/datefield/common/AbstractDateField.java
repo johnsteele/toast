@@ -107,4 +107,8 @@ public abstract class AbstractDateField {
 	public void setFocus() {
 		getControl().setFocus();
 	}
+	
+	public boolean isDisposed() {
+		return getControl().isDisposed();
+	}
 }

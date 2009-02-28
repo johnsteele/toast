@@ -12,7 +12,6 @@ package org.eclipse.examples.expenses.widgets.datefield;
 
 import java.text.ParseException;
 import java.util.Date;
-import java.util.Locale;
 
 import org.eclipse.examples.expenses.widgets.datefield.common.AbstractDateField;
 import org.eclipse.swt.SWT;

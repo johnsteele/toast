@@ -317,6 +317,7 @@ public class LineItemView extends AbstractView {
 			}
 
 			public void update() {
+				if (dateField.isDisposed()) return;
 				if (lineItem == null) {
 					dateField.setEnabled(false);
 					dateField.setDate(null);
@@ -367,6 +368,7 @@ public class LineItemView extends AbstractView {
 			}
 
 			public void update() {
+				if (typeDropdown.getCombo().isDisposed()) return;
 				if (lineItem == null) {
 					typeDropdown.getCombo().setEnabled(false);
 					typeDropdown.setSelection(StructuredSelection.EMPTY);
@@ -404,6 +406,7 @@ public class LineItemView extends AbstractView {
 			}
 
 			public void update() {
+				if (amountField.isDisposed()) return;
 				if (lineItem == null) {
 					amountField.setEnabled(false);
 					amountField.setMoney(null);
@@ -440,6 +443,7 @@ public class LineItemView extends AbstractView {
 			}
 
 			public void update() {
+				if (exchangeRateText.isDisposed()) return;
 				if (lineItem == null) {
 					exchangeRateText.setEnabled(false);
 					exchangeRateText.setText("");
@@ -475,6 +479,7 @@ public class LineItemView extends AbstractView {
 			}
 
 			public void update() {
+				if (commentText.isDisposed()) return;
 				if (lineItem == null) {
 					commentText.setEnabled(false);
 					commentText.setText("");
