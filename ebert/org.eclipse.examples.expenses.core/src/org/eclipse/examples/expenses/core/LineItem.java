@@ -11,6 +11,8 @@
 package org.eclipse.examples.expenses.core;
 
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.Calendar;
 import java.util.Date;
@@ -63,8 +65,8 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 	 * The date that this expense was incurred. The default value, which is created by the
 	 * constructor is the current date.
 	 * 
-	 * @see getDate
-	 * @see setDate
+	 * @see #getDate()
+	 * @see #setDate(Date)
 	 */
 	Date date;
 	
@@ -72,27 +74,31 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 	 * The type of the expense. This value should generally be an instance of {@link ExpenseType}
 	 * taken from the {@link ExpensesBinder#getExpenseTypes()}. The default value is <code>null</code>.
 	 * 
-	 * @see getType
-	 * @see setType
+	 * @see #getType()
+	 * @see #setType(ExpenseType)
 	 */
 	ExpenseType type;
 	
 	/**
-	 * The amount of the expense. We use the {@link CurrencyAmount} type from ICU4J.
-	 * The default value is CAD$0.
+	 * The amount of the expense. We use the {@link CurrencyAmount} type from
+	 * ICU4J. The default value is CAD$0.
+	 * <p>
+	 * Since {@link CurrencyAmount} is not serializable, this field is marked as
+	 * transient and the serialization process is customized by the
+	 * {@link #readObject(ObjectInputStream)} and
+	 * {@link #writeObject(ObjectOutputStream)} methods.
 	 * 
-	 * @see getAmount
-	 * @see setAmount
-	 * 
-	 * TODO This value should be specified in the binder's default currency (Bug 239512).
+	 * @see #getAmount()
+	 * @see #setAmount(CurrencyAmount) TODO This value should be specified in
+	 *      the binder's default currency (Bug 239512).
 	 */
-	CurrencyAmount amount = new CurrencyAmount(new Integer(0), Currency.getInstance(Locale.CANADA));
+	transient CurrencyAmount amount = new CurrencyAmount(new Integer(0), Currency.getInstance(Locale.CANADA));
 	
 	/**
 	 * The comment is arbitrary text describing the receiver. The default value is <code>null</code>.
 	 * 
-	 * @see getComment
-	 * @see setComment
+	 * @see #getComment()
+	 * @see #setComment(String)
 	 */
 	String comment;
 	
@@ -104,8 +110,8 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 	 * opportunity to override that value. A value of 0.0 (the default)
 	 * indicates that the default value should be used.
 	 * 
-	 * @see getExchangeRate
-	 * @see setExchangeRate
+	 * @see #getExchangeRate()
+	 * @see #setExchangeRate(double)
 	 */
 	double exchangeRate = 0.0;
 
@@ -160,7 +166,6 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 	}
 
 	public void setExchangeRate(double exchangeRate) {
-
 		double oldValue = this.exchangeRate;
 		this.exchangeRate = exchangeRate;
 		firePropertyChanged(EXCHANGE_RATE_PROPERTY, new Double(oldValue), new Double(exchangeRate));
@@ -168,5 +173,19 @@ public class LineItem extends ObjectWithProperties implements Serializable {
 
 	public double getExchangeRate() {
 		return exchangeRate;
+	}
+	
+	private void writeObject(ObjectOutputStream out) throws IOException {
+		out.defaultWriteObject();
+		out.writeObject(amount.getNumber());
+		out.writeObject(amount.getCurrency());
+	}
+	
+	private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+		in.defaultReadObject();
+		Number amount = (Number)in.readObject();
+		Currency currency = (Currency)in.readObject();
+		
+		this.amount = new CurrencyAmount(amount, currency);
 	}
 }
