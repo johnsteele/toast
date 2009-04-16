@@ -10,28 +10,28 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.context.rap;
 
-import org.eclipse.examples.expenses.context.IUserContext;
+import org.eclipse.examples.expenses.context.UserContext;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
-import org.eclipse.examples.expenses.views.model.ViewModel;
 import org.eclipse.rwt.RWT;
+import org.eclipse.rwt.service.SessionStoreEvent;
+import org.eclipse.rwt.service.SessionStoreListener;
 
 import com.ibm.icu.util.ULocale;
 
-public class RapUserContext implements IUserContext {
-	
-	private ViewModel viewModel;
-	private ExpensesBinder binder;
+public class RapUserContext extends UserContext {
 
-	public RapUserContext() {
-		viewModel = new ViewModel();
-		binder = new ExpensesBinder();
-		viewModel.setBinder(binder);
-	}
-	
-	public ViewModel getViewModel() {
-		return viewModel;
+	public RapUserContext(ExpensesBinder binder) {
+		super(binder);
 	}
 
+	protected void initialize() {		
+		RWT.getSessionStore().addSessionStoreListener(new SessionStoreListener(){		
+			public void beforeDestroy(SessionStoreEvent event) {
+				RapUserContext.this.dispose();
+			}
+		});
+	}
+	
 	public ULocale getUserLocale() {
 		return ULocale.forLocale(RWT.getLocale());
 	}

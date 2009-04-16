@@ -8,16 +8,23 @@
  * Contributors:
  *    The Eclipse Foundation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.examples.expenses.context;
+package org.eclipse.examples.expenses.identity.simple;
 
-import org.eclipse.examples.expenses.views.model.ViewModel;
+import org.eclipse.examples.expenses.context.IIdentityService;
+import org.eclipse.swt.widgets.Display;
 
-import com.ibm.icu.util.ULocale;
-
-public interface IUserContext {
-	ULocale getUserLocale();
-
-	ViewModel getViewModel();
+public class SimpleLoginIdentityService implements IIdentityService {
 	
-	void dispose();
+	public String getUserId() {
+		return login(Display.getCurrent());
+	}
+
+	String login(Display display) {
+		LoginDialog dialog = new LoginDialog(display);
+		dialog.login();
+		
+		//if (dialog.isCancelled()) throw new IdentityAssertionRefusedException();
+		
+		return dialog.getUserId();
+	}
 }

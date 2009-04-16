@@ -34,9 +34,5 @@ import org.eclipse.examples.expenses.core.ExpensesBinder;
  * TODO This needs to moved to where it can be shared.
  */
 public interface IPersistenceService {
-
-	void saveBinder(IUserContext userContext, ExpensesBinder binder);
-
 	ExpensesBinder loadBinder(String userId);
-
 }

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component immediate="true" name="org.eclipse.examples.expenses.application.rap">
+   <implementation class="org.eclipse.examples.expenses.context.rap.RapUserContextService"/>
+   <reference bind="setPersistenceService" cardinality="1..1" interface="org.eclipse.examples.expenses.context.IPersistenceService" name="IPersistenceService" policy="dynamic" unbind="unsetPersistenceService"/>
+   <service>
+      <provide interface="org.eclipse.examples.expenses.context.IUserContextService"/>
+   </service>
+   <reference bind="setIdentityService" cardinality="1..1" interface="org.eclipse.examples.expenses.context.IIdentityService" name="IIdentityService" policy="static" unbind="unsetIdentityService"/>
+</component>

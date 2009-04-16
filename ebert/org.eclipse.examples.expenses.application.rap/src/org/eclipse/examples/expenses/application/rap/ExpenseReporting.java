@@ -10,12 +10,8 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.application.rap;
 
-import java.io.IOException;
-
 import org.eclipse.examples.expenses.application.general.ApplicationWorkbenchAdvisor;
 import org.eclipse.examples.expenses.application.general.ApplicationWorkbenchWindowAdvisor;
-import org.eclipse.examples.expenses.application.general.LoginDialog;
-import org.eclipse.rwt.RWT;
 import org.eclipse.rwt.lifecycle.IEntryPoint;
 import org.eclipse.rwt.lifecycle.UICallBack;
 import org.eclipse.swt.SWT;
@@ -50,29 +46,11 @@ public class ExpenseReporting implements IEntryPoint {
 
 		Display display = PlatformUI.createDisplay();
 		
-		String userId = login(display);
-		if (userId != null) {
-			WorkbenchAdvisor advisor = createApplicationWorkbenchAdvisor(userId);
-			return PlatformUI.createAndRunWorkbench(display, advisor);
-		} else {
-			try {
-				RWT.getResponse().sendRedirect("stuff.html");
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			return PlatformUI.RETURN_UNSTARTABLE;
-		}
+		WorkbenchAdvisor advisor = createApplicationWorkbenchAdvisor();
+		return PlatformUI.createAndRunWorkbench(display, advisor);
 	}
 
-	String login(Display display) {
-		String userId = new LoginDialog().login(display);
-		if (userId == null) return null;		
-		RWT.getSessionStore().setAttribute(USER_ID, userId);
-		return userId;
-	}
-
-	ApplicationWorkbenchAdvisor createApplicationWorkbenchAdvisor(final String userId) {
+	ApplicationWorkbenchAdvisor createApplicationWorkbenchAdvisor() {
 		return new ApplicationWorkbenchAdvisor() {
 			@Override
 			public WorkbenchWindowAdvisor createWorkbenchWindowAdvisor(IWorkbenchWindowConfigurer configurer) {

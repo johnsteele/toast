@@ -19,7 +19,13 @@ import java.io.ObjectOutputStream;
 
 import org.eclipse.examples.expenses.context.IPersistenceService;
 import org.eclipse.examples.expenses.context.IUserContext;
+import org.eclipse.examples.expenses.core.CollectionPropertyChangeEvent;
+import org.eclipse.examples.expenses.core.ExpenseReport;
 import org.eclipse.examples.expenses.core.ExpensesBinder;
+import org.eclipse.examples.expenses.core.LineItem;
+import org.eclipse.examples.expenses.core.ObjectWithProperties;
+import org.eclipse.jface.util.IPropertyChangeListener;
+import org.eclipse.jface.util.PropertyChangeEvent;
 
 /**
  * This class implements are pretty unsophisticated persistence service based on
@@ -31,8 +37,7 @@ import org.eclipse.examples.expenses.core.ExpensesBinder;
  * should be registered at any time as consumers expect there to be one
  * implementor at most.
  */
-public class SerializationBasedPersistenceService implements
-		IPersistenceService {
+public class SerializationBasedPersistenceService implements IPersistenceService {
 
 	/**
 	 * Name of the subdirectory of the user's home directory where the state is
@@ -42,12 +47,58 @@ public class SerializationBasedPersistenceService implements
 
 	public ExpensesBinder loadBinder(String userId) {
 		ExpensesBinder binder = loadExpensesBinder(getBinderFile(userId));
-		if (binder == null) binder = new ExpensesBinder();  
+		if (binder == null) binder = new ExpensesBinder();
+		addListeners(userId, binder);
 		return binder;
 	}
 
-	public void saveBinder(IUserContext userContext, ExpensesBinder binder) {
-		saveExpensesBinder(getBinderFile(userContext.getUserId()), binder);
+	protected void addListeners(final String userId, final ExpensesBinder binder) {
+		final IPropertyChangeListener[] listeners = new IPropertyChangeListener[1];
+		IPropertyChangeListener listener = new IPropertyChangeListener() {
+			public void propertyChange(PropertyChangeEvent event) {
+				saveBinder(userId, binder);
+				if (event instanceof CollectionPropertyChangeEvent) {
+					addAndRemoveListeners((CollectionPropertyChangeEvent)event, listeners[0]);
+				}
+			}			
+		};
+		listeners[0] = listener;
+		addListenerToBinder(binder, listener);
+	}
+
+	private void addListenerToBinder(ExpensesBinder binder, IPropertyChangeListener listener) {
+		binder.addPropertyChangeListener(listener);
+		ExpenseReport[] expenseReports = binder.getReports();
+		for(int index=0;index<expenseReports.length;index++) {
+			addListenerToExpenseReport(listener, expenseReports[index]);
+		}
+	}
+
+	private void addListenerToExpenseReport(IPropertyChangeListener listener, ExpenseReport expenseReport) {
+		expenseReport.addPropertyChangeListener(listener);
+		LineItem[] lineItems = expenseReport.getLineItems();
+		for(int index=0;index<lineItems.length;index++) {
+			addListenerToLineItem(listener, lineItems[index]);
+		}
+	}
+
+	private void addListenerToLineItem(IPropertyChangeListener listener, LineItem lineItem) {
+		lineItem.addPropertyChangeListener(listener);
+	}
+
+	protected void addAndRemoveListeners(CollectionPropertyChangeEvent event, IPropertyChangeListener listener) {
+		for (int index=0;index<event.added.length;index++) {
+			((ObjectWithProperties)event.added[index]).addPropertyChangeListener(listener);
+		}
+		
+		for (int index=0;index<event.removed.length;index++) {
+			((ObjectWithProperties)event.removed[index]).removePropertyChangeListener(listener);
+		}
+		
+	}
+
+	public void saveBinder(String userId, ExpensesBinder binder) {
+		saveExpensesBinder(getBinderFile(userId), binder);
 	}
 
 	File getBinderFile(String id) {

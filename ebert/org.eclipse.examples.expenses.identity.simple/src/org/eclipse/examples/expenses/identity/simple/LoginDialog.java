@@ -8,11 +8,13 @@
  * Contributors:
  *    The Eclipse Foundation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.examples.expenses.application.general;
+package org.eclipse.examples.expenses.identity.simple;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.events.VerifyEvent;
+import org.eclipse.swt.events.VerifyListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.layout.RowLayout;
@@ -26,8 +28,13 @@ import org.eclipse.swt.widgets.Text;
 public class LoginDialog {
 	protected String userId;
 	private Text userIdText;
+	private final Display display;
 
-	public String login(Display display) {
+	public LoginDialog(Display display) {
+		this.display = display;
+	}
+
+	public String login() {
 		final Shell shell = createDialog(display);		
 		shell.setBounds(25, 25, 400, 200);
 		shell.open();
@@ -62,7 +69,7 @@ public class LoginDialog {
 		
 		buttons.setLayout(new RowLayout());
 		
-		Button okayButton = new Button(buttons, SWT.PUSH);
+		final Button okayButton = new Button(buttons, SWT.PUSH);
 		
 		okayButton.setText("Login");
 		okayButton.addSelectionListener(new SelectionListener() {
@@ -71,6 +78,13 @@ public class LoginDialog {
 			public void widgetSelected(SelectionEvent e) {
 				userId = userIdText.getText().trim();
 				shell.dispose();
+			}
+		});
+		
+		okayButton.setEnabled(false);
+		userIdText.addVerifyListener(new VerifyListener() {		
+			public void verifyText(VerifyEvent event) {
+				okayButton.setEnabled(!userIdText.getText().trim().isEmpty());
 			}
 		});
 		
@@ -85,5 +99,9 @@ public class LoginDialog {
 			}
 		});
 		return shell;
+	}
+
+	public String getUserId() {
+		return userId;
 	}
 }
