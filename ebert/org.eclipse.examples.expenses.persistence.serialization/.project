@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>org.eclipse.examples.expenses.context.standalone</name>
+	<name>org.eclipse.examples.expenses.persistence.serialization</name>
 	<comment></comment>
 	<projects>
 	</projects>

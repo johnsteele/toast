@@ -517,8 +517,9 @@ public class ExpenseReportView extends AbstractView {
 	
 		lineItemTableViewer.addPostSelectionChangedListener(new ISelectionChangedListener() {
 			public void selectionChanged(SelectionChangedEvent event) {
+				if (getViewModel() == null) return;
 				IStructuredSelection selection = (IStructuredSelection)event.getSelection();
-				getViewModel().setLineItem((LineItem) selection.getFirstElement());
+				getViewModel().setLineItem(selection.isEmpty() ? null : (LineItem) selection.getFirstElement());
 			}			
 		});
 		

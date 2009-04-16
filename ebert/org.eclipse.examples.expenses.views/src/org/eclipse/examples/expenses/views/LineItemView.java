@@ -181,7 +181,29 @@ public class LineItemView extends AbstractView {
 	 * @see #createCommentField(Composite)
 	 */
 	abstract class FieldStateHandler {
+		/**
+		 * This method is invoked when a property changes in the model.
+		 * When the handler is registered, it is registered with the name of
+		 * the property; property change events are filtered so that only
+		 * events for the property with that name will be sent to this
+		 * handler.
+		 * <p>
+		 * Implementors should assume that the method is being invoked
+		 * in the UI Thread.
+		 *  
+		 * @param oldValue the value of the property before the change
+		 * @param newValue the new value.
+		 */
 		public abstract void propertyChanged(Object oldValue, Object newValue);
+		
+		/**
+		 * This method is invoked when the view needs to refresh or update
+		 * it's contents. This method is invoked at creation and any time
+		 * that the {@link LineItem} tracked by the view is changed.
+		 * <p>
+		 * Implementors should assume that the method is being invoked
+		 * in the UI Thread.
+		 */
 		public abstract void update();
 	}
 	
@@ -237,7 +259,13 @@ public class LineItemView extends AbstractView {
 	}
 
 
+	/**
+	 * The receiver needs to be disposed. This is typically a result
+	 * of the receiver having been closed. We use this opportunity
+	 * to clean up some of the resources we've allocated.
+	 */
 	public void dispose() {
+		unhookListeners(lineItem);
 		stopUserContextServiceTracker();
 	}
 	
@@ -313,6 +341,7 @@ public class LineItemView extends AbstractView {
 		});
 		fieldHandlers.put(LineItem.DATE_PROPERTY, new FieldStateHandler() {
 			public void propertyChanged(Object oldValue, Object newValue) {
+				if (dateField.isDisposed()) return;
 				dateField.setDate((Date)newValue);
 			}
 
@@ -364,6 +393,7 @@ public class LineItemView extends AbstractView {
 		});
 		fieldHandlers.put(LineItem.TYPE_PROPERTY, new FieldStateHandler() {
 			public void propertyChanged(Object oldValue, Object newValue) {
+				if (typeDropdown.getCombo().isDisposed()) return;
 				setSelection(newValue);
 			}
 
@@ -402,6 +432,7 @@ public class LineItemView extends AbstractView {
 		
 		fieldHandlers.put(LineItem.AMOUNT_PROPERTY, new FieldStateHandler() {
 			public void propertyChanged(Object oldValue, Object newValue) {
+				if (amountField.isDisposed()) return;
 				amountField.setMoney((CurrencyAmount)newValue);
 			}
 
@@ -454,6 +485,7 @@ public class LineItemView extends AbstractView {
 			}
 
 			private void setValue(double exchangeRate) {
+				if (exchangeRateText.isDisposed()) return;
 				exchangeRateText.setText(exchangeRateFormat.format(exchangeRate));
 			}
 		});
@@ -490,12 +522,18 @@ public class LineItemView extends AbstractView {
 			}
 
 			private void setValue(String comment) {
+				if (commentText.isDisposed()) return;
 				if (commentText.getText().equals(comment)) return;
 				commentText.setText(comment == null ? "" : comment);
 			}
 		});
 	}
 	
+	/**
+	 * Update all the fields on the view. This iterates through
+	 * all the field handlers and sends the {@link FieldStateHandler#update()}
+	 * message to each. This method must be run in the UI Thread. 
+	 */
 	void update() {
 		Iterator handlers = fieldHandlers.values().iterator();
 		while (handlers.hasNext()) {
@@ -521,19 +559,53 @@ public class LineItemView extends AbstractView {
 		}
 	}
 
-	public void setLineItem(LineItem lineItem) {
+	/**
+	 * Use this method to set the {@link LineItem} instance tracked by the
+	 * receiver. Invoking this method will force the receiver to update itself
+	 * to display, and provide editing support, for the provided instance.
+	 * 
+	 * @param lineItem
+	 *            an instance of {@link LineItem}. Can be <code>null</code>
+	 */
+	public void setLineItem(final LineItem lineItem) {
 		unhookListeners(this.lineItem);
 		hookListeners(lineItem);
-		this.lineItem = lineItem;
-		update();
+		syncExec(new Runnable() {
+			public void run() {
+				LineItemView.this.lineItem = lineItem;
+				update();
+			}			
+		});
 	}
 
-
+	/**
+	 * This method hooks listeners to a {@link LineItem} instance
+	 * so that property changes in the instance will be reported
+	 * to the receiver.
+	 * 
+	 * @see #unhookListeners(LineItem)
+	 * @see #setLineItem(LineItem)
+	 * 
+	 * @param lineItem instance of {@link LineItem} or <code>null</code>.
+	 */
 	void hookListeners(LineItem lineItem) {
 		if (lineItem == null) return;
 		lineItem.addPropertyChangeListener(propertyChangeListener);
 	}
 	
+	/**
+	 * This method removes any previously installed listeners from
+	 * the {@link LineItem}. Once called, the the receiver will no
+	 * longer be notified of changes to the instance. This method
+	 * must be called whenever we are no longer interested in the 
+	 * instance; it must be called when we (a) change the instance
+	 * of LineItem, or dispose the receiver.
+	 * 
+	 * @see #hookListeners(LineItem)
+	 * @see #setLineItem(LineItem)
+	 * @see #dispose()
+	 * @param lineItem instance of {@link LineItem} or <code>null</code>.
+	 */
 	void unhookListeners(LineItem lineItem) {
 		if (lineItem == null) return;
 		lineItem.removePropertyChangeListener(propertyChangeListener);

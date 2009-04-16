@@ -8,23 +8,14 @@
  * Contributors:
  *    The Eclipse Foundation - initial API and implementation
  *******************************************************************************/
-package org.eclipse.examples.expenses.context;
+package org.eclipse.examples.expenses.identity.standalone;
 
-import org.eclipse.examples.expenses.views.model.ViewModel;
+import org.eclipse.examples.expenses.context.IIdentityService;
 
-import com.ibm.icu.util.ULocale;
+public class StandaloneIdentityService implements IIdentityService {
 
-public interface IUserContext {
-	ULocale getUserLocale();
+	public String getUserId() {
+		return "local-user";
+	}
 
-	ViewModel getViewModel();
-
-	/**
-	 * This method answers an appropriate id for the current user.
-	 * 
-	 * @return a {@link String} value.
-	 */
-	String getUserId();
-	
-	void dispose();
 }

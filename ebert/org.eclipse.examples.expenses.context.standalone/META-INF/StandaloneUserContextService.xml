@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" name="org.eclipse.examples.expenses.context.standalone">
+   <implementation class="org.eclipse.examples.expenses.context.standalone.StandaloneUserContextService"/>
+   <service>
+      <provide interface="org.eclipse.examples.expenses.context.IUserContextService"/>
+   </service>
+   <reference bind="setIdentityService" cardinality="1..1" interface="org.eclipse.examples.expenses.context.IIdentityService" name="IIdentityService" policy="dynamic" unbind="unsetIdentityService"/>
+   <reference bind="setPersistenceService" cardinality="1..1" interface="org.eclipse.examples.expenses.context.IPersistenceService" name="IPersistenceService" policy="dynamic" unbind="unsetPersistenceService"/>
+</scr:component>

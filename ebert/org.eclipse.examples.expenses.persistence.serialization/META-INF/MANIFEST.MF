@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Serialization Based Persistence Services
+Bundle-SymbolicName: org.eclipse.examples.expenses.persistence.serialization
+Bundle-Version: 0.2.0.qualifier
+Require-Bundle: org.eclipse.core.runtime
+Bundle-RequiredExecutionEnvironment: J2SE-1.4
+Import-Package: org.eclipse.examples.expenses.context,
+ org.eclipse.examples.expenses.core
+Service-Component: META-INF/SerializationBasedPersistenceService.xml

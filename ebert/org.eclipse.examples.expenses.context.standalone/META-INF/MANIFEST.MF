@@ -3,8 +3,6 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Standalone IUserContext Bundle
 Bundle-SymbolicName: org.eclipse.examples.expenses.context.standalone
 Bundle-Version: 0.2.0.qualifier
-Bundle-Activator: org.eclipse.examples.expenses.context.standalone.Activator
-Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: CDC-1.1/Foundation-1.1,
  OSGi/Minimum-1.1
 Import-Package: com.ibm.icu.util,
@@ -12,3 +10,4 @@ Import-Package: com.ibm.icu.util,
  org.eclipse.examples.expenses.core;version="[0.1.0,1.0.0)";resolution:=optional,
  org.eclipse.examples.expenses.views.model;version="[0.2.0,1.0.0)";resolution:=optional,
  org.osgi.framework
+Service-Component: META-INF/StandaloneUserContextService.xml

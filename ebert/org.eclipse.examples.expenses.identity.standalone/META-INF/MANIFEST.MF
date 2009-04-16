@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Standalone
+Bundle-SymbolicName: org.eclipse.examples.expenses.identity.standalone
+Bundle-Version: 0.2.0.qualifer
+Bundle-RequiredExecutionEnvironment: OSGi/Minimum-1.1,
+ CDC-1.1/Foundation-1.1
+Import-Package: org.eclipse.examples.expenses.context;version="[0.2.0,1.0.0)"
+Service-Component: META-INF/StandaloneIdentityService.xml

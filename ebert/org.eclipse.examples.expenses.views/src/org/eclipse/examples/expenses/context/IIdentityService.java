@@ -10,21 +10,20 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.context;
 
-import org.eclipse.examples.expenses.views.model.ViewModel;
-
-import com.ibm.icu.util.ULocale;
-
-public interface IUserContext {
-	ULocale getUserLocale();
-
-	ViewModel getViewModel();
+/**
+ * An identity service provides identity information. The
+ * {@link #getUserId()} method is the main entry point for clients.
+ */
+public interface IIdentityService {
 
 	/**
-	 * This method answers an appropriate id for the current user.
+	 * This method answers an identifier for the user
+	 * associated with the current thread. Note that since
+	 * this method is thread-specific, there is no need
+	 * to do any synchronization.
 	 * 
-	 * @return a {@link String} value.
+	 * @return a non-empty {@link String}.
 	 */
 	String getUserId();
-	
-	void dispose();
+
 }

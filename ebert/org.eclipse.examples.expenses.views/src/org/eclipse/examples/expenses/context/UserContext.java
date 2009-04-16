@@ -10,21 +10,21 @@
  *******************************************************************************/
 package org.eclipse.examples.expenses.context;
 
+import org.eclipse.examples.expenses.core.ExpensesBinder;
 import org.eclipse.examples.expenses.views.model.ViewModel;
 
-import com.ibm.icu.util.ULocale;
+public abstract class UserContext implements IUserContext {
+	ViewModel viewModel;
 
-public interface IUserContext {
-	ULocale getUserLocale();
+	public UserContext(ExpensesBinder binder) {
+		viewModel = new ViewModel();
+		viewModel.setBinder(binder);
+	}
 
-	ViewModel getViewModel();
-
-	/**
-	 * This method answers an appropriate id for the current user.
-	 * 
-	 * @return a {@link String} value.
-	 */
-	String getUserId();
+	public ViewModel getViewModel() {
+		return viewModel;
+	}
 	
-	void dispose();
+	public void dispose() {
+	}
 }
