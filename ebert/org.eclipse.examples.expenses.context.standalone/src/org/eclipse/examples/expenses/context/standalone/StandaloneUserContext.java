@@ -16,17 +16,11 @@ import org.eclipse.examples.expenses.core.ExpensesBinder;
 import com.ibm.icu.util.ULocale;
 
 public class StandaloneUserContext extends UserContext {
-	private static final String LOCAL_USER_ID = "local-user";
-
 	public StandaloneUserContext(ExpensesBinder binder) {
 		super(binder);
 	}
 
 	public ULocale getUserLocale() {
 		return ULocale.getDefault();
-	}
-	
-	public String getUserId() {
-		return LOCAL_USER_ID;
 	}
 }
