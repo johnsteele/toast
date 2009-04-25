@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?pde version="3.5"?>
+
+<product name="Eclipse Business Expense Reporting Tool" uid="org.eclipse.examples.ebert.rcp" id="org.eclipse.examples.expenses.application.rcp.product" application="org.eclipse.examples.expenses.application.rcp.application" version="0.2.0.qualifier" useFeatures="true">
+
+
+   <configIni use="default">
+   </configIni>
+
+   <launcherArgs>
+      <programArgs>-console</programArgs>
+      <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts</vmArgsMac>
+   </launcherArgs>
+
+   <windowImages i16="icons/alt_window_16.gif" i32="icons/alt_window_32.gif"/>
+
+
+   <launcher>
+      <solaris/>
+      <win useIco="false">
+         <bmp/>
+      </win>
+   </launcher>
+
+
+   <vm>
+   </vm>
+
+
+   <plugins>
+   </plugins>
+
+   <features>
+      <feature id="org.eclipse.examples.expenses.feature.rcp" version="0.2.0.qualifier"/>
+      <feature id="org.eclipse.rcp" version="3.5.0.v20090307-9RA-FqhFstOCxSdfkxdojLKc"/>
+   </features>
+
+   <configurations>
+      <plugin id="org.eclipse.equinox.ds" autoStart="true" startLevel="0" />
+      <plugin id="org.eclipse.examples.expenses.context.standalone" autoStart="true" startLevel="1" />
+      <plugin id="org.eclipse.examples.expenses.identity.standalone" autoStart="true" startLevel="1" />
+      <plugin id="org.eclipse.examples.expenses.persistence.serialization" autoStart="true" startLevel="1" />
+   </configurations>
+
+</product>
