@@ -9,11 +9,34 @@
  * Contributors: 
  *     EclipseSource Inc. - initial API and implementation
  *******************************************************************************/
-//google.load("jquery", "1");
-google.load("earth", "1");
-google.load("maps", "2.99");  // For JS geocod
-var DS_ge;
-var DS_geHelpers;
-var DS_map;
-var DS_widget;
-var DS_start = false;
+package org.eclipse.examples.toast.rap.drivingsimulator.resource;
+
+import org.eclipse.rwt.resources.IResource;
+import org.eclipse.rwt.resources.IResourceManager.RegisterOptions;
+
+public class FunctionsResource implements IResource {
+
+	public String getCharset() {
+		return DrivingSimulatorAPIResource.CHARSET_NAME_ISO_8859_1;
+	}
+
+	public ClassLoader getLoader() {
+		return this.getClass().getClassLoader();
+	}
+
+	public String getLocation() {
+		return "org/eclipse/rap/drivingsimulator/js/Functions.js";
+	}
+
+	public RegisterOptions getOptions() {
+		return RegisterOptions.NONE;
+	}
+
+	public boolean isExternal() {
+		return false;
+	}
+
+	public boolean isJSLibrary() {
+		return true;
+	}
+}
