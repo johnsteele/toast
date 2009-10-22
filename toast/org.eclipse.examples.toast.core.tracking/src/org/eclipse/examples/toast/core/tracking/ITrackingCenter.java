@@ -9,21 +9,14 @@
  * Contributors: 
  *     Paul VanderLei, Simon Archer, Jeff McAffer - initial API and implementation
  *******************************************************************************/
-package org.eclipse.examples.toast.backend.controlcenter;
+package org.eclipse.examples.toast.core.tracking;
 
-import java.util.Collection;
-import org.eclipse.examples.toast.backend.data.IVehicle;
+import org.eclipse.examples.toast.backend.data.ITrackedLocation;
 
-public interface IData {
-	public Collection getVehicles();
+public interface ITrackingCenter {
 
-	public void update(IVehicle object);
+	public abstract void postTrackingLocation(String id, int latitude, int longitude, int heading, int speed);
 
-	public void persist(IVehicle object);
+	public abstract ITrackedLocation[] getTrackedLocations(String id);
 
-	public void removeVehicle(String name);
-
-	public Collection getVehicleNames();
-
-	public IVehicle getVehicle(String name);
 }

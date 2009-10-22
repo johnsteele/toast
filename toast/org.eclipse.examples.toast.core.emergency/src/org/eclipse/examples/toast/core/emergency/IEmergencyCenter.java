@@ -9,21 +9,10 @@
  * Contributors: 
  *     Paul VanderLei, Simon Archer, Jeff McAffer - initial API and implementation
  *******************************************************************************/
-package org.eclipse.examples.toast.backend.controlcenter;
+package org.eclipse.examples.toast.core.emergency;
 
-import java.util.Collection;
-import org.eclipse.examples.toast.backend.data.IVehicle;
+public interface IEmergencyCenter {
 
-public interface IData {
-	public Collection getVehicles();
+	public abstract String emergency(String id, int latitude, int longitude, int heading, int speed);
 
-	public void update(IVehicle object);
-
-	public void persist(IVehicle object);
-
-	public void removeVehicle(String name);
-
-	public Collection getVehicleNames();
-
-	public IVehicle getVehicle(String name);
 }
